@@ -18,10 +18,13 @@ public class AppUser {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @Column(name = "kullanici_adi", nullable = false, unique = true)
+    private String kullaniciAdi;
+
     @Column(nullable = false)
     private String ad;
 
-    @Column(nullable = false, unique = true)
+    @Column(unique = true)
     private String email;
 
     private String telefon;

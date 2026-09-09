@@ -12,6 +12,7 @@ import java.util.UUID;
 @Builder
 public class UserMeResponse {
     private UUID id;
+    private String kullaniciAdi;
     private String ad;
     private String email;
     private String telefon;

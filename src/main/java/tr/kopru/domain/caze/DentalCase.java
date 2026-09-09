@@ -29,6 +29,10 @@ public class DentalCase {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @Version
+    @Column(nullable = false)
+    private long version;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "partnership_id", nullable = false)
     private Partnership partnership;

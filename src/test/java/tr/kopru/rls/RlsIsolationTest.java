@@ -112,7 +112,7 @@ public class RlsIsolationTest {
         String clinicCId = UUID.randomUUID().toString();
         String userCId = UUID.randomUUID().toString();
         jdbcTemplate.execute("INSERT INTO organization (id, tip, ad) VALUES ('" + clinicCId + "', 'KLINIK', 'Klinik C')");
-        jdbcTemplate.execute("INSERT INTO app_user (id, ad, email, parola_hash) VALUES ('" + userCId + "', 'Dr C', 'c@c.com', 'hash')");
+        jdbcTemplate.execute("INSERT INTO app_user (id, ad, email, parola_hash, kullanici_adi) VALUES ('" + userCId + "', 'Dr C', 'c@c.com', 'hash', 'drc')");
         jdbcTemplate.execute("INSERT INTO membership (user_id, org_id, rol) VALUES ('" + userCId + "', '" + clinicCId + "', 'HEKIM')");
 
         // User C queries existing cases of Clinic A

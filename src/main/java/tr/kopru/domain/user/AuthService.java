@@ -1,6 +1,9 @@
 package tr.kopru.domain.user;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,30 +33,51 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
 
+    @PersistenceContext
+    private EntityManager entityManager;
+
     @Transactional
     public AuthResponse register(RegisterRequest request) {
-        if (userRepository.existsByEmail(request.getEmail())) {
-            throw ApiException.validationError("Bu email adresi zaten kayitli.", null);
-        }
-
         AppUser user = new AppUser();
+        user.setKullaniciAdi(request.getKullaniciAdi().toLowerCase().trim());
         user.setAd(request.getAd());
-        user.setEmail(request.getEmail().toLowerCase().trim());
+        user.setEmail(request.getEmail() != null && !request.getEmail().isBlank()
+                ? request.getEmail().toLowerCase().trim() : null);
         user.setTelefon(request.getTelefon());
         user.setParolaHash(passwordEncoder.encode(request.getParola()));
-        user = userRepository.save(user);
 
+        try {
+            // saveAndFlush => unique ihlali burada yakalanir (RLS altinda existsBy* guvenilmez)
+            user = userRepository.saveAndFlush(user);
+        } catch (DataIntegrityViolationException e) {
+            throw ApiException.validationError("Bu kullanici adi veya email zaten kayitli.", null);
+        }
+
+        // Yeni kullanicinin refresh token'ini yazabilmek icin RLS baglamini kur
+        bindTenant(user.getId());
         return createAuthResponse(user);
     }
 
     @Transactional
     public AuthResponse login(LoginRequest request) {
-        AppUser user = userRepository.findByEmail(request.getEmail().toLowerCase().trim())
-                .orElseThrow(() -> ApiException.unauthenticated("Email veya parola hatali."));
-
-        if (!passwordEncoder.matches(request.getParola(), user.getParolaHash())) {
-            throw ApiException.unauthenticated("Email veya parola hatali.");
+        // 1) Pre-auth lookup (SECURITY DEFINER) — app.user_id henuz bos
+        List<Object[]> rows = userRepository.findLoginRaw(request.getKullaniciAdi().toLowerCase().trim());
+        if (rows.isEmpty()) {
+            throw ApiException.unauthenticated("Kullanici adi veya parola hatali.");
         }
+        Object[] row = rows.get(0);
+        UUID userId = (UUID) row[0];
+        String parolaHash = (String) row[1];
+
+        // 2) Parola dogrula
+        if (!passwordEncoder.matches(request.getParola(), parolaHash)) {
+            throw ApiException.unauthenticated("Kullanici adi veya parola hatali.");
+        }
+
+        // 3) Artik kimlik dogru; RLS baglamini kur ve tam kullaniciyi yukle
+        bindTenant(userId);
+        AppUser user = userRepository.findById(userId)
+                .orElseThrow(() -> ApiException.unauthenticated("Kullanici adi veya parola hatali."));
 
         return createAuthResponse(user);
     }
@@ -66,6 +90,9 @@ public class AuthService {
         }
 
         UUID userId = jwtTokenProvider.parseUserId(rawToken);
+        // refresh_token ve app_user'a RLS altinda erisebilmek icin baglami kur
+        bindTenant(userId);
+
         String tokenHash = hashToken(rawToken);
 
         RefreshToken refreshToken = refreshTokenRepository.findByTokenHash(tokenHash)
@@ -86,6 +113,9 @@ public class AuthService {
     @Transactional
     public void logout(RefreshTokenRequest request) {
         if (request != null && request.getRefresh() != null) {
+            if (jwtTokenProvider.validateToken(request.getRefresh())) {
+                bindTenant(jwtTokenProvider.parseUserId(request.getRefresh()));
+            }
             String tokenHash = hashToken(request.getRefresh());
             refreshTokenRepository.findByTokenHash(tokenHash).ifPresent(token -> {
                 token.setRevokedAt(OffsetDateTime.now());
@@ -116,6 +146,7 @@ public class AuthService {
 
         return UserMeResponse.builder()
                 .id(user.getId())
+                .kullaniciAdi(user.getKullaniciAdi())
                 .ad(user.getAd())
                 .email(user.getEmail())
                 .telefon(user.getTelefon())
@@ -123,8 +154,20 @@ public class AuthService {
                 .build();
     }
 
+    /**
+     * Transaction icinde app.user_id'yi set eder. TenantAspect metot girisinde bunu
+     * bos ('') olarak ayarlar; auth akisinda kimlik belirlendikten sonra RLS'in dogru
+     * calismasi (refresh_token insert WITH CHECK, app_user SELECT) icin gereklidir.
+     */
+    private void bindTenant(UUID userId) {
+        TenantContext.setUserId(userId);
+        entityManager.createNativeQuery("SELECT set_config('app.user_id', :uid, true)")
+                .setParameter("uid", userId.toString())
+                .getSingleResult();
+    }
+
     private AuthResponse createAuthResponse(AppUser user) {
-        String access = jwtTokenProvider.generateAccessToken(user.getId(), user.getEmail());
+        String access = jwtTokenProvider.generateAccessToken(user.getId(), user.getKullaniciAdi());
         String refresh = jwtTokenProvider.generateRefreshToken(user.getId());
 
         RefreshToken refreshToken = new RefreshToken();

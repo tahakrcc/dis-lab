@@ -72,19 +72,27 @@ public class OrgService {
             throw ApiException.validationError("KLINIK organizasyonuna LAB rolleri atanamaz.", null);
         }
 
-        AppUser user = userRepository.findByEmail(request.getEmail().toLowerCase().trim())
-                .orElseThrow(() -> ApiException.notFound("Bu email adresine sahip kullanici bulunamadi."));
+        // Hedef kullanici henuz uye olmadigindan RLS altinda gorunmez -> definer lookup ile id coz
+        java.util.List<UUID> ids = userRepository.findUserIdByUsername(request.getKullaniciAdi().toLowerCase().trim());
+        if (ids.isEmpty()) {
+            throw ApiException.notFound("Bu kullanici adina sahip kullanici bulunamadi.");
+        }
+        UUID targetUserId = ids.get(0);
 
-        if (membershipRepository.findByUserIdAndOrganizationId(user.getId(), orgId).isPresent()) {
+        if (membershipRepository.findByUserIdAndOrganizationId(targetUserId, orgId).isPresent()) {
             throw ApiException.validationError("Bu kullanici zaten organizasyonun uyesidir.", null);
         }
 
         Membership membership = new Membership();
-        membership.setUser(user);
+        membership.setUser(userRepository.getReferenceById(targetUserId));
         membership.setOrganization(org);
         membership.setRol(request.getRol());
         membership.setDurum(Aktiflik.AKTIF);
-        membership = membershipRepository.save(membership);
+        // saveAndFlush -> kullanici artik admin ile ayni org'u paylastigi icin sonrasinda gorunur
+        membership = membershipRepository.saveAndFlush(membership);
+
+        AppUser user = userRepository.findById(targetUserId)
+                .orElseThrow(() -> ApiException.notFound("Kullanici bulunamadi."));
 
         return MemberResponse.builder()
                 .id(membership.getId())

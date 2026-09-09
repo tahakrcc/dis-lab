@@ -8,10 +8,13 @@ import lombok.Setter;
 @Getter
 @Setter
 public class RegisterRequest {
+    @NotBlank(message = "Kullanici adi alani zorunludur")
+    private String kullaniciAdi;
+
     @NotBlank(message = "Ad alani zorunludur")
     private String ad;
 
-    @NotBlank(message = "Email alani zorunludur")
+    // Email opsiyonel; verilirse gecerli formatta olmali
     @Email(message = "Gecerli bir email adresi giriniz")
     private String email;
 
