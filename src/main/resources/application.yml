@@ -1,0 +1,46 @@
+spring:
+  application:
+    name: kopru
+
+  # ---- DataSource (application role — restricted, subject to RLS) ----
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:kopru}
+    username: ${DB_APP_USER:kopru_app}
+    password: ${DB_APP_PASSWORD:kopru_app_pass}
+    hikari:
+      maximum-pool-size: 10
+      connection-timeout: 20000
+
+  # ---- JPA / Hibernate ----
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        jdbc:
+          time_zone: UTC
+
+  # ---- Flyway (owner role — runs migrations) ----
+  flyway:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:kopru}
+    user: ${DB_OWNER_USER:postgres}
+    password: ${DB_OWNER_PASSWORD:postgres}
+    locations: classpath:db/migration
+    baseline-on-migrate: false
+    validate-on-migrate: true
+
+# ---- JWT ----
+kopru:
+  jwt:
+    secret: ${JWT_SECRET:Y2hhbmdlLXRoaXMtaW4tcHJvZHVjdGlvbi10by1hLXJlYWwtc2VjcmV0LWtleQ==}
+    access-token-expiration: 15m
+    refresh-token-expiration: 7d
+
+# ---- Logging ----
+logging:
+  level:
+    tr.kopru: DEBUG
+    org.flywaydb: INFO
+    org.hibernate.SQL: DEBUG

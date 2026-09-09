@@ -1,0 +1,23 @@
+# ====================================================================
+# Köprü — Örnek Yapılandırma Dosyası
+# Bu dosyayı application.yml olarak kopyalayıp değerleri düzenleyin.
+# Ortam değişkenleri ile override edilebilir (.env.example dosyasına bakın).
+# ====================================================================
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/kopru
+    username: kopru_app
+    password: CHANGE_ME
+
+  flyway:
+    url: jdbc:postgresql://localhost:5432/kopru
+    user: postgres
+    password: CHANGE_ME
+
+kopru:
+  jwt:
+    # Minimum 256-bit (32 byte) Base64-encoded secret
+    secret: CHANGE_ME_TO_A_REAL_SECRET_KEY
+    access-token-expiration: 15m
+    refresh-token-expiration: 7d

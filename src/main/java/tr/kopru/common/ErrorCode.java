@@ -1,0 +1,12 @@
+package tr.kopru.common;
+
+public enum ErrorCode {
+    UNAUTHENTICATED,
+    FORBIDDEN,
+    NOT_FOUND,
+    INVALID_TRANSITION,
+    ALREADY_DELIVERED,
+    VERSION_MISMATCH,
+    PRICE_NOT_FOUND,
+    VALIDATION_ERROR
+}
