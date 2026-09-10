@@ -40,6 +40,7 @@ export interface CreateCaseItemInput {
   adet: number;
   materyal?: string | null;
   renk?: string | null;
+  specs?: string; // jsonb; ör. {"aciklama":"..."}
 }
 
 export interface CreateCaseInput {

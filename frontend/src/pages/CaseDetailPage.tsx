@@ -20,6 +20,16 @@ function disList(d: number[]): string {
   return d && d.length ? d.join(" · ") : "—";
 }
 
+function specAciklama(specs: string | null): string {
+  if (!specs) return "";
+  try {
+    const o = JSON.parse(specs);
+    return o && typeof o.aciklama === "string" ? o.aciklama : "";
+  } catch {
+    return "";
+  }
+}
+
 export default function CaseDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { activeMembership } = useAuth();
@@ -159,6 +169,13 @@ export default function CaseDetailPage() {
             )}
           </section>
 
+          {vaka.genelNot && (
+            <section className="card block">
+              <div className="card-title">Açıklama</div>
+              <p className="aciklama-text">{vaka.genelNot}</p>
+            </section>
+          )}
+
           <section className="card block">
             <div className="card-title">Kalemler ({vaka.items.length})</div>
             <div className="table-wrap">
@@ -176,7 +193,12 @@ export default function CaseDetailPage() {
                 <tbody>
                   {vaka.items.map((it) => (
                     <tr key={it.id}>
-                      <td>{it.serviceItemAd}</td>
+                      <td>
+                        {it.serviceItemAd}
+                        {specAciklama(it.specs) && (
+                          <div className="item-note">{specAciklama(it.specs)}</div>
+                        )}
+                      </td>
                       <td className="mono muted-cell">{disList(it.disNumaralari)}</td>
                       <td className="muted-cell">
                         {[it.materyal, it.renk].filter(Boolean).join(" · ") || "—"}

@@ -23,6 +23,7 @@ interface ItemRow {
   adet: number;
   materyal: string;
   renk: string;
+  aciklama: string;
 }
 
 let rowSeq = 1;
@@ -33,6 +34,7 @@ const bosRow = (): ItemRow => ({
   adet: 1,
   materyal: "",
   renk: "",
+  aciklama: "",
 });
 
 function baslikHarfleri(ad: string): string {
@@ -141,6 +143,9 @@ export default function NewCasePage() {
     if (!partnershipId) return setHata("Bir laboratuvar (ortaklık) seçmelisin.");
     if (!hastaRumuzu.trim()) return setHata("Hasta rumuzu zorunludur.");
 
+    const specsOf = (r: ItemRow) =>
+      r.aciklama.trim() ? JSON.stringify({ aciklama: r.aciklama.trim() }) : undefined;
+
     const payloadItems = [];
     for (const r of items) {
       if (!r.serviceItemId) return setHata("Her kalemde bir hizmet seçilmeli.");
@@ -153,6 +158,7 @@ export default function NewCasePage() {
           adet: h.adet,
           materyal: r.materyal || null,
           renk: r.renk || null,
+          specs: specsOf(r),
         });
       } else {
         if (r.adet < 1) return setHata("Adet en az 1 olmalı.");
@@ -162,6 +168,7 @@ export default function NewCasePage() {
           adet: r.adet,
           materyal: r.materyal || null,
           renk: r.renk || null,
+          specs: specsOf(r),
         });
       }
     }
@@ -257,9 +264,14 @@ export default function NewCasePage() {
                 <span>Teslim tarihi</span>
                 <input type="date" value={teslimTarihi} onChange={(e) => setTeslimTarihi(e.target.value)} />
               </label>
-              <label className="field">
-                <span>Genel not</span>
-                <input value={genelNot} onChange={(e) => setGenelNot(e.target.value)} placeholder="opsiyonel" />
+              <label className="field full">
+                <span>Açıklama</span>
+                <textarea
+                  value={genelNot}
+                  onChange={(e) => setGenelNot(e.target.value)}
+                  placeholder="Vaka için genel açıklama / laba iletmek istediğin notlar (opsiyonel)"
+                  rows={3}
+                />
               </label>
             </div>
           </section>
@@ -332,6 +344,15 @@ export default function NewCasePage() {
                     >
                       ✕
                     </button>
+
+                    <label className="field item-aciklama">
+                      <span>Açıklama (bu kalem)</span>
+                      <input
+                        value={r.aciklama}
+                        onChange={(e) => updateRow(r.key, { aciklama: e.target.value })}
+                        placeholder="ör. Kesim çizgisine dikkat, komşu diş rengiyle uyumlu"
+                      />
+                    </label>
                   </div>
                 );
               })}
