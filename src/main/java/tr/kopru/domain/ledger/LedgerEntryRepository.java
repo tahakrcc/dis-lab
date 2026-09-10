@@ -23,7 +23,10 @@ public interface LedgerEntryRepository extends JpaRepository<LedgerEntry, UUID> 
             @Param("from") LocalDate from,
             @Param("to") LocalDate to);
 
+    // NOT: Cok kolonlu native sorguda Optional<Object[]> belirsizdir (Spring Data
+    // diziyi "sonuc listesi" gibi yorumlayip tek-eleman dondurebiliyor -> "Index 1
+    // out of bounds"). List<Object[]> ile her satir dogru sekilde Object[4] olur.
     @Query(value = "SELECT partnership_id, toplam_borc, toplam_tahsilat, bakiye " +
             "FROM balance WHERE partnership_id = :partnershipId", nativeQuery = true)
-    Optional<Object[]> getBalanceNative(@Param("partnershipId") UUID partnershipId);
+    List<Object[]> getBalanceNative(@Param("partnershipId") UUID partnershipId);
 }

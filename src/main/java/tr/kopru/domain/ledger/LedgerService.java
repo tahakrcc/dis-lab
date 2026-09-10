@@ -35,9 +35,9 @@ public class LedgerService {
         BigDecimal toplamTahsilat = BigDecimal.ZERO;
         BigDecimal bakiye = BigDecimal.ZERO;
 
-        Optional<Object[]> balanceRow = ledgerEntryRepository.getBalanceNative(partnershipId);
-        if (balanceRow.isPresent()) {
-            Object[] row = balanceRow.get();
+        List<Object[]> balanceRows = ledgerEntryRepository.getBalanceNative(partnershipId);
+        if (!balanceRows.isEmpty()) {
+            Object[] row = balanceRows.get(0);
             if (row[1] != null) toplamBorc = new BigDecimal(row[1].toString());
             if (row[2] != null) toplamTahsilat = new BigDecimal(row[2].toString());
             if (row[3] != null) bakiye = new BigDecimal(row[3].toString());

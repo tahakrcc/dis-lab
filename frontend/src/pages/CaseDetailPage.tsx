@@ -9,9 +9,11 @@ import {
   formatTutar,
   getCase,
   getCaseEvents,
+  transitionCase,
   type CaseEvent,
   type DentalCase,
 } from "../api/cases";
+import { availableActions, type ActionDef } from "../api/caseActions";
 import { StatusBadge } from "./CasesPage";
 
 function disList(d: number[]): string {
@@ -26,12 +28,15 @@ export default function CaseDetailPage() {
   const [vaka, setVaka] = useState<DentalCase | null>(null);
   const [olaylar, setOlaylar] = useState<CaseEvent[]>([]);
   const [hata, setHata] = useState<string | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [aksiyonHata, setAksiyonHata] = useState<string | null>(null);
 
   useEffect(() => {
     if (!id) return;
     let iptal = false;
     setVaka(null);
     setHata(null);
+    setAksiyonHata(null);
     Promise.all([getCase(id), getCaseEvents(id).catch(() => [])])
       .then(([v, e]) => {
         if (iptal) return;
@@ -43,6 +48,35 @@ export default function CaseDetailPage() {
       iptal = true;
     };
   }, [id]);
+
+  async function aksiyonCalistir(a: ActionDef) {
+    if (!vaka) return;
+    setAksiyonHata(null);
+
+    if (a.confirm && !window.confirm(a.confirm)) return;
+
+    const payload: Record<string, unknown> = {};
+    if (a.sendVersion) payload.fiyatVersiyon = vaka.fiyatVersiyon;
+    if (a.nedenKey) {
+      const neden = window.prompt("Neden / açıklama:", "");
+      if (neden === null) return; // vazgeçildi
+      payload[a.nedenKey] = neden;
+    }
+
+    setBusy(a.aksiyon);
+    try {
+      const guncel = await transitionCase(vaka.id, a.aksiyon, payload);
+      setVaka(guncel);
+      const ev = await getCaseEvents(vaka.id).catch(() => olaylar);
+      setOlaylar(ev);
+    } catch (e) {
+      setAksiyonHata(e instanceof ApiError ? e.message : "İşlem başarısız.");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  const aksiyonlar = vaka ? availableActions(activeMembership?.rol, vaka.durum) : [];
 
   return (
     <div className="page">
@@ -97,6 +131,33 @@ export default function CaseDetailPage() {
               </div>
             </div>
           </div>
+
+          <section className="card block actions-card">
+            <div className="card-title">Aksiyonlar</div>
+            {aksiyonlar.length === 0 ? (
+              <div className="empty sm">
+                Bu durumda ({CASE_STATUS_META[vaka.durum].label}) rolünle yapılabilecek bir işlem yok.
+              </div>
+            ) : (
+              <div className="action-btns">
+                {aksiyonlar.map((a) => (
+                  <button
+                    key={a.aksiyon}
+                    className={`btn btn-${a.variant === "danger" ? "danger" : a.variant === "ghost" ? "ghost" : "primary"}`}
+                    disabled={busy !== null}
+                    onClick={() => aksiyonCalistir(a)}
+                  >
+                    {busy === a.aksiyon ? "İşleniyor…" : a.label}
+                  </button>
+                ))}
+              </div>
+            )}
+            {aksiyonHata && (
+              <div className="alert alert-error" style={{ marginTop: 12 }}>
+                {aksiyonHata}
+              </div>
+            )}
+          </section>
 
           <section className="card block">
             <div className="card-title">Kalemler ({vaka.items.length})</div>
@@ -160,10 +221,6 @@ export default function CaseDetailPage() {
             )}
           </section>
 
-          <div className="note sm">
-            Onay ve durum aksiyonları (gönder, karşı teklif, onayla, üretime al, prova,
-            tamamla, teslim) bir sonraki adımda bu sayfaya eklenecek.
-          </div>
         </>
       )}
     </div>

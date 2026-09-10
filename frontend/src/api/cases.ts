@@ -99,6 +99,17 @@ export function getCaseEvents(id: string): Promise<CaseEvent[]> {
   return apiFetch<CaseEvent[]>(`/cases/${id}/events`);
 }
 
+export function transitionCase(
+  id: string,
+  aksiyon: string,
+  payload?: Record<string, unknown>
+): Promise<DentalCase> {
+  return apiFetch<DentalCase>(`/cases/${id}/transitions`, {
+    method: "POST",
+    body: { aksiyon, payload: payload ?? {} },
+  });
+}
+
 export function formatTutar(n: number): string {
   return new Intl.NumberFormat("tr-TR", {
     style: "currency",

@@ -125,6 +125,22 @@ a {
 .btn-block {
   width: 100%;
 }
+.btn-danger {
+  background: transparent;
+  border-color: var(--danger);
+  color: var(--danger);
+}
+.btn-danger:hover:not(:disabled) {
+  background: var(--danger-dim);
+}
+.action-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.actions-card {
+  border-color: var(--border-strong);
+}
 
 /* ---------- auth (login) ---------- */
 .auth-wrap {
