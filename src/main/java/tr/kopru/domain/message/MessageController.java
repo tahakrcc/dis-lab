@@ -1,0 +1,31 @@
+package tr.kopru.domain.message;
+
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import tr.kopru.domain.message.dto.CreateMessageRequest;
+import tr.kopru.domain.message.dto.MessageResponse;
+
+import java.util.List;
+import java.util.UUID;
+
+@RestController
+@RequestMapping("/api/v1/cases/{caseId}/messages")
+@RequiredArgsConstructor
+public class MessageController {
+
+    private final MessageService messageService;
+
+    @GetMapping
+    public ResponseEntity<List<MessageResponse>> getMessages(@PathVariable UUID caseId) {
+        return ResponseEntity.ok(messageService.getMessages(caseId));
+    }
+
+    @PostMapping
+    public ResponseEntity<MessageResponse> sendMessage(
+            @PathVariable UUID caseId, @Valid @RequestBody CreateMessageRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(messageService.sendMessage(caseId, request));
+    }
+}

@@ -9,8 +9,11 @@ import {
   formatTutar,
   getCase,
   getCaseEvents,
+  getMessages,
+  sendMessage,
   transitionCase,
   type CaseEvent,
+  type CaseMessage,
   type DentalCase,
 } from "../api/cases";
 import { availableActions, type ActionDef } from "../api/caseActions";
@@ -32,8 +35,13 @@ function specAciklama(specs: string | null): string {
 
 export default function CaseDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const { activeMembership } = useAuth();
+  const { activeMembership, me } = useAuth();
   const isLab = activeMembership?.orgTip === "LAB";
+
+  const [mesajlar, setMesajlar] = useState<CaseMessage[]>([]);
+  const [yeniMesaj, setYeniMesaj] = useState("");
+  const [mesajGonder, setMesajGonder] = useState(false);
+  const [mesajHata, setMesajHata] = useState<string | null>(null);
 
   const [vaka, setVaka] = useState<DentalCase | null>(null);
   const [olaylar, setOlaylar] = useState<CaseEvent[]>([]);
@@ -58,6 +66,38 @@ export default function CaseDetailPage() {
       iptal = true;
     };
   }, [id]);
+
+  // Sohbet: ilk yükleme + 8sn'de bir tazeleme
+  useEffect(() => {
+    if (!id) return;
+    let iptal = false;
+    const yukle = () =>
+      getMessages(id)
+        .then((m) => !iptal && setMesajlar(m))
+        .catch(() => {});
+    yukle();
+    const t = setInterval(yukle, 8000);
+    return () => {
+      iptal = true;
+      clearInterval(t);
+    };
+  }, [id]);
+
+  async function mesajYolla(e: React.FormEvent) {
+    e.preventDefault();
+    if (!id || !yeniMesaj.trim()) return;
+    setMesajHata(null);
+    setMesajGonder(true);
+    try {
+      const m = await sendMessage(id, yeniMesaj.trim());
+      setMesajlar((prev) => [...prev, m]);
+      setYeniMesaj("");
+    } catch (err) {
+      setMesajHata(err instanceof ApiError ? err.message : "Mesaj gönderilemedi.");
+    } finally {
+      setMesajGonder(false);
+    }
+  }
 
   async function aksiyonCalistir(a: ActionDef) {
     if (!vaka) return;
@@ -243,6 +283,44 @@ export default function CaseDetailPage() {
             )}
           </section>
 
+          <section className="card block chat-card">
+            <div className="card-title">Sohbet ({mesajlar.length})</div>
+            <div className="chat-list">
+              {mesajlar.length === 0 ? (
+                <div className="empty sm">Henüz mesaj yok. Laboratuvar ↔ klinik yazışmasını burada yapın.</div>
+              ) : (
+                mesajlar.map((m) => {
+                  const benim = m.senderUserId === me?.id;
+                  return (
+                    <div key={m.id} className={`chat-msg ${benim ? "mine" : ""}`}>
+                      <div className="chat-bubble">
+                        <div className="chat-meta">
+                          <span className={`badge ${m.senderTaraf === "LAB" ? "badge-lab" : "badge-klinik"}`}>
+                            {m.senderTaraf === "LAB" ? "LAB" : "KLİNİK"}
+                          </span>
+                          <span className="chat-sender">{m.senderAd}</span>
+                          <span className="chat-time">{formatTarihSaat(m.createdAt)}</span>
+                        </div>
+                        <div className="chat-text">{m.metin}</div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+            <form className="chat-input" onSubmit={mesajYolla}>
+              <input
+                value={yeniMesaj}
+                onChange={(e) => setYeniMesaj(e.target.value)}
+                placeholder="Mesaj yaz…"
+                maxLength={4000}
+              />
+              <button className="btn btn-primary" type="submit" disabled={mesajGonder || !yeniMesaj.trim()}>
+                {mesajGonder ? "…" : "Gönder"}
+              </button>
+            </form>
+            {mesajHata && <div className="alert alert-error">{mesajHata}</div>}
+          </section>
         </>
       )}
     </div>

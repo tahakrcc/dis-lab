@@ -110,6 +110,24 @@ export function transitionCase(
   });
 }
 
+export interface CaseMessage {
+  id: string;
+  caseId: string;
+  senderUserId: string;
+  senderAd: string;
+  senderTaraf: "LAB" | "KLINIK";
+  metin: string;
+  createdAt: string;
+}
+
+export function getMessages(id: string): Promise<CaseMessage[]> {
+  return apiFetch<CaseMessage[]>(`/cases/${id}/messages`);
+}
+
+export function sendMessage(id: string, metin: string): Promise<CaseMessage> {
+  return apiFetch<CaseMessage>(`/cases/${id}/messages`, { method: "POST", body: { metin } });
+}
+
 export function formatTutar(n: number): string {
   return new Intl.NumberFormat("tr-TR", {
     style: "currency",
