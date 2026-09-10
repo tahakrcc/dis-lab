@@ -36,7 +36,11 @@ export default function Layout() {
               <span className="nav-dot" /> Hastalar
             </NavLink>
           )}
-          {/* Sonraki sayfalar sırayla buraya eklenecek */}
+          {(activeMembership?.rol === "LAB_ADMIN" || activeMembership?.rol === "KLINIK_ADMIN") && (
+            <NavLink to="/org" className="nav-link">
+              <span className="nav-dot" /> Organizasyon
+            </NavLink>
+          )}
         </nav>
 
         <div className="sidebar-foot">

@@ -1,43 +1,24 @@
 :root {
-  /* Light palette (varsayılan) */
-  --bg: #eef2f2;
+  color-scheme: light;
+  /* Kurumsal açık (beyaz) tema */
+  --bg: #f3f5f9;
   --panel: #ffffff;
-  --panel-2: #f3f7f7;
-  --border: #d8e2e1;
-  --border-strong: #c2d2d0;
-  --text: #0f1f1e;
-  --muted: #5d716f;
-  --faint: #8496a4;
-  --accent: #0c9c8e;
-  --accent-ink: #075e55;
-  --accent-dim: rgba(12, 156, 142, 0.12);
-  --danger: #bf463a;
-  --danger-dim: rgba(191, 70, 58, 0.12);
-  --warn: #9c6a12;
-  --warn-dim: rgba(156, 106, 18, 0.12);
-  --shadow: 0 1px 2px rgba(15, 31, 30, 0.05), 0 10px 30px rgba(15, 31, 30, 0.06);
+  --panel-2: #f7f9fc;
+  --border: #e4e8ef;
+  --border-strong: #d2d9e4;
+  --text: #172033;
+  --muted: #586576;
+  --faint: #8b95a6;
+  --accent: #0d9488;
+  --accent-ink: #0f766e;
+  --accent-dim: rgba(13, 148, 136, 0.1);
+  --danger: #dc2626;
+  --danger-dim: rgba(220, 38, 38, 0.09);
+  --warn: #b45309;
+  --warn-dim: rgba(180, 83, 9, 0.1);
+  --shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 4px 14px rgba(16, 24, 40, 0.06);
+  --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.05);
   --radius: 12px;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0b1113;
-    --panel: #101a1c;
-    --panel-2: #0d1619;
-    --border: #1e2c30;
-    --border-strong: #2a3d42;
-    --text: #dbe8e9;
-    --muted: #83989e;
-    --faint: #63787e;
-    --accent: #4bd3c5;
-    --accent-ink: #8fe7dd;
-    --accent-dim: rgba(75, 211, 197, 0.13);
-    --danger: #e5796d;
-    --danger-dim: rgba(229, 121, 109, 0.13);
-    --warn: #e6b45c;
-    --warn-dim: rgba(230, 180, 92, 0.13);
-    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 10px 30px rgba(0, 0, 0, 0.28);
-  }
 }
 
 * {
@@ -108,7 +89,7 @@ a {
 }
 .btn-primary {
   background: var(--accent);
-  color: #05221f;
+  color: #ffffff;
 }
 .btn-primary:hover:not(:disabled) {
   background: var(--accent-ink);
@@ -451,6 +432,7 @@ a {
   background: var(--accent-dim);
   color: var(--accent-ink);
   font-weight: 600;
+  box-shadow: inset 3px 0 0 var(--accent);
 }
 .nav-dot {
   width: 7px;
@@ -484,6 +466,10 @@ a {
   padding: 12px 24px;
   border-bottom: 1px solid var(--border);
   background: var(--panel);
+  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.03);
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 .org-switch {
   display: flex;
@@ -1112,6 +1098,33 @@ a {
   outline: none;
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-dim);
+}
+
+/* ---------- org / yönetim ---------- */
+.alert-ok {
+  background: var(--accent-dim);
+  color: var(--accent-ink);
+  border: 1px solid var(--accent);
+  margin-top: 12px;
+}
+.member-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+  margin-top: 14px;
+}
+.member-form .field.grow {
+  flex: 1 1 220px;
+}
+.hint {
+  margin: 12px 0 0;
+  font-size: 0.82rem;
+  color: var(--faint);
+}
+.small-id {
+  font-size: 0.78rem;
+  word-break: break-all;
 }
 
 @media (max-width: 760px) {
