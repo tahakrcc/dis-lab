@@ -44,6 +44,9 @@ export function listMembers(orgId: string): Promise<Member[]> {
 export function addMember(orgId: string, body: { kullaniciAdi: string; rol: Rol }): Promise<Member> {
   return apiFetch<Member>(`/admin/organizations/${orgId}/members`, { method: "POST", body });
 }
+export function removeMember(membershipId: string): Promise<void> {
+  return apiFetch<void>(`/admin/members/${membershipId}`, { method: "DELETE" });
+}
 
 // Ortaklıklar
 export function listPartnerships(): Promise<Partnership[]> {
@@ -56,6 +59,12 @@ export function createPartnership(body: {
 }): Promise<Partnership> {
   return apiFetch<Partnership>("/admin/partnerships", { method: "POST", body });
 }
+export function updatePartnership(
+  id: string,
+  body: { durum?: "AKTIF" | "PASIF"; vadeGun?: number }
+): Promise<Partnership> {
+  return apiFetch<Partnership>(`/admin/partnerships/${id}`, { method: "PATCH", body });
+}
 
 // Katalog & fiyat
 export function listServiceItems(labId: string): Promise<ServiceItem[]> {
@@ -63,6 +72,13 @@ export function listServiceItems(labId: string): Promise<ServiceItem[]> {
 }
 export function createServiceItem(labId: string, body: { ad: string; birim: BirimTipi }): Promise<ServiceItem> {
   return apiFetch<ServiceItem>(`/admin/labs/${labId}/service-items`, { method: "POST", body });
+}
+export function updateServiceItem(
+  labId: string,
+  id: string,
+  body: { ad?: string; aktif?: boolean }
+): Promise<ServiceItem> {
+  return apiFetch<ServiceItem>(`/admin/labs/${labId}/service-items/${id}`, { method: "PATCH", body });
 }
 export function getPrices(partnershipId: string): Promise<PriceEntry[]> {
   return apiFetch<PriceEntry[]>(`/admin/partnerships/${partnershipId}/prices`);

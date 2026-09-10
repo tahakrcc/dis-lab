@@ -13,6 +13,7 @@ import tr.kopru.domain.catalog.ServiceItem;
 import tr.kopru.domain.catalog.ServiceItemRepository;
 import tr.kopru.domain.catalog.dto.CreateServiceItemRequest;
 import tr.kopru.domain.catalog.dto.ServiceItemResponse;
+import tr.kopru.domain.catalog.dto.UpdateServiceItemRequest;
 import tr.kopru.domain.org.*;
 import tr.kopru.domain.org.dto.CreateOrgRequest;
 import tr.kopru.domain.org.dto.MemberResponse;
@@ -109,6 +110,28 @@ public class AdminService {
         item.setAktif(true);
         item = serviceItemRepository.save(item);
         return mapServiceItem(item);
+    }
+
+    @Transactional
+    public ServiceItemResponse updateServiceItem(UUID labId, UUID id, UpdateServiceItemRequest request) {
+        ServiceItem item = serviceItemRepository.findByIdAndLabId(id, labId)
+                .orElseThrow(() -> ApiException.notFound("Katalog kalemi bulunamadi."));
+        if (request.getAd() != null) {
+            item.setAd(request.getAd());
+        }
+        if (request.getAktif() != null) {
+            item.setAktif(request.getAktif());
+        }
+        item = serviceItemRepository.save(item);
+        return mapServiceItem(item);
+    }
+
+    @Transactional
+    public void deactivateMember(UUID membershipId) {
+        Membership m = membershipRepository.findById(membershipId)
+                .orElseThrow(() -> ApiException.notFound("Uyelik bulunamadi."));
+        m.setDurum(Aktiflik.PASIF);
+        membershipRepository.save(m);
     }
 
     // ---- mappers ----

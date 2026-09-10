@@ -7,6 +7,7 @@ import {
   createOrganization,
   listMembers,
   listOrganizations,
+  removeMember,
 } from "../../api/admin";
 
 export default function AdminOrgsPage() {
@@ -67,6 +68,17 @@ export default function AdminOrgsPage() {
       setOrgHata(err instanceof ApiError ? err.message : "Oluşturulamadı.");
     } finally {
       setOrgBusy(false);
+    }
+  }
+
+  async function uyeCikar(membershipId: string) {
+    if (!selected) return;
+    if (!window.confirm("Bu üye organizasyondan çıkarılacak (pasifleştirilecek). Devam?")) return;
+    try {
+      await removeMember(membershipId);
+      setMembers(await listMembers(selected.id));
+    } catch (err) {
+      setUyeHata(err instanceof ApiError ? err.message : "Üye çıkarılamadı.");
     }
   }
 
@@ -170,6 +182,9 @@ export default function AdminOrgsPage() {
                     <span className="mem-ad">{m.userAd}</span>
                   </div>
                   <span className="mem-rol">{ROL_ETIKET[m.rol]}</span>
+                  <button className="mini-btn danger-btn" onClick={() => uyeCikar(m.id)}>
+                    Çıkar
+                  </button>
                 </li>
               ))}
             </ul>

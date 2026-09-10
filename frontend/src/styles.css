@@ -1048,6 +1048,10 @@ a {
   border-color: var(--accent);
   background: var(--accent-dim);
 }
+.mini-btn.danger-btn:hover:not(:disabled) {
+  border-color: var(--danger);
+  color: var(--danger);
+}
 .mini-btn:disabled {
   opacity: 0.5;
   cursor: default;

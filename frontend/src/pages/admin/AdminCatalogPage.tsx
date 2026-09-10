@@ -9,6 +9,7 @@ import {
   listOrganizations,
   listPartnerships,
   listServiceItems,
+  updateServiceItem,
   upsertPrice,
 } from "../../api/admin";
 
@@ -77,6 +78,15 @@ export default function AdminCatalogPage() {
     return m;
   }, [prices]);
 
+  async function aktiflikDegis(itemId: string, aktif: boolean) {
+    try {
+      await updateServiceItem(labId, itemId, { aktif: !aktif });
+      await katalogYukle(labId);
+    } catch (err) {
+      setHata(err instanceof ApiError ? err.message : "Güncellenemedi.");
+    }
+  }
+
   async function kalemEkle(e: React.FormEvent) {
     e.preventDefault();
     setHata(null);
@@ -142,6 +152,7 @@ export default function AdminCatalogPage() {
                 <th>Ad</th>
                 <th>Birim</th>
                 <th>Durum</th>
+                <th aria-label="işlem"></th>
               </tr>
             </thead>
             <tbody>
@@ -153,6 +164,11 @@ export default function AdminCatalogPage() {
                     <span className={`status-badge ${it.aktif ? "st-onay" : "st-taslak"}`}>
                       {it.aktif ? "Aktif" : "Pasif"}
                     </span>
+                  </td>
+                  <td className="num">
+                    <button className="mini-btn" onClick={() => aktiflikDegis(it.id, it.aktif)}>
+                      {it.aktif ? "Pasifleştir" : "Aktifleştir"}
+                    </button>
                   </td>
                 </tr>
               ))}

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ApiError } from "../../api/client";
 import type { Organization } from "../../api/org";
 import type { Partnership } from "../../api/catalog";
-import { createPartnership, listOrganizations, listPartnerships } from "../../api/admin";
+import { createPartnership, listOrganizations, listPartnerships, updatePartnership } from "../../api/admin";
 
 export default function AdminPartnershipsPage() {
   const [orgs, setOrgs] = useState<Organization[]>([]);
@@ -47,6 +47,15 @@ export default function AdminPartnershipsPage() {
       setFormHata(err instanceof ApiError ? err.message : "Ortaklık kurulamadı.");
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function durumDegis(id: string, durum: "AKTIF" | "PASIF") {
+    try {
+      await updatePartnership(id, { durum: durum === "AKTIF" ? "PASIF" : "AKTIF" });
+      await yukle();
+    } catch (err) {
+      setHata(err instanceof ApiError ? err.message : "Güncellenemedi.");
     }
   }
 
@@ -103,6 +112,7 @@ export default function AdminPartnershipsPage() {
                 <th>Klinik</th>
                 <th>Durum</th>
                 <th className="num">Vade</th>
+                <th aria-label="işlem"></th>
               </tr>
             </thead>
             <tbody>
@@ -116,6 +126,11 @@ export default function AdminPartnershipsPage() {
                     </span>
                   </td>
                   <td className="num mono">{p.vadeGun}</td>
+                  <td className="num">
+                    <button className="mini-btn" onClick={() => durumDegis(p.id, p.durum)}>
+                      {p.durum === "AKTIF" ? "Pasifleştir" : "Aktifleştir"}
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
