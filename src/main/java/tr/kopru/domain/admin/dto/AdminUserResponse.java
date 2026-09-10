@@ -13,6 +13,7 @@ public class AdminUserResponse {
     private String kullaniciAdi;
     private String ad;
     private String email;
+    private String telefon;
     private boolean superAdmin;
     private OffsetDateTime createdAt;
 }

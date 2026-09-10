@@ -9,6 +9,8 @@ import tr.kopru.common.Aktiflik;
 import tr.kopru.common.ApiException;
 import tr.kopru.domain.admin.dto.AdminUserResponse;
 import tr.kopru.domain.admin.dto.CreateUserRequest;
+import tr.kopru.domain.admin.dto.UpdateOrgRequest;
+import tr.kopru.domain.admin.dto.UpdateUserRequest;
 import tr.kopru.domain.catalog.ServiceItem;
 import tr.kopru.domain.catalog.ServiceItemRepository;
 import tr.kopru.domain.catalog.dto.CreateServiceItemRequest;
@@ -57,6 +59,23 @@ public class AdminService {
         return mapUser(user);
     }
 
+    @Transactional
+    public AdminUserResponse updateUser(UUID id, UpdateUserRequest request) {
+        AppUser user = userRepository.findById(id)
+                .orElseThrow(() -> ApiException.notFound("Kullanici bulunamadi."));
+        if (request.getAd() != null && !request.getAd().isBlank()) {
+            user.setAd(request.getAd());
+        }
+        if (request.getTelefon() != null) {
+            user.setTelefon(request.getTelefon().isBlank() ? null : request.getTelefon());
+        }
+        if (request.getParola() != null && !request.getParola().isBlank()) {
+            user.setParolaHash(passwordEncoder.encode(request.getParola()));
+        }
+        user = userRepository.save(user);
+        return mapUser(user);
+    }
+
     // ---- Organizasyonlar ----
 
     @Transactional(readOnly = true)
@@ -74,6 +93,26 @@ public class AdminService {
         org.setAdres(request.getAdres());
         if (request.getAyarlar() != null && !request.getAyarlar().isBlank()) {
             org.setAyarlar(request.getAyarlar());
+        }
+        org = organizationRepository.save(org);
+        return mapOrg(org);
+    }
+
+    @Transactional
+    public OrgResponse updateOrganization(UUID id, UpdateOrgRequest request) {
+        Organization org = organizationRepository.findById(id)
+                .orElseThrow(() -> ApiException.notFound("Organizasyon bulunamadi."));
+        if (request.getAd() != null && !request.getAd().isBlank()) {
+            org.setAd(request.getAd());
+        }
+        if (request.getTelefon() != null) {
+            org.setTelefon(request.getTelefon().isBlank() ? null : request.getTelefon());
+        }
+        if (request.getVergiNo() != null) {
+            org.setVergiNo(request.getVergiNo().isBlank() ? null : request.getVergiNo());
+        }
+        if (request.getAdres() != null) {
+            org.setAdres(request.getAdres().isBlank() ? null : request.getAdres());
         }
         org = organizationRepository.save(org);
         return mapOrg(org);
@@ -142,6 +181,7 @@ public class AdminService {
                 .kullaniciAdi(u.getKullaniciAdi())
                 .ad(u.getAd())
                 .email(u.getEmail())
+                .telefon(u.getTelefon())
                 .superAdmin(u.isSuperAdmin())
                 .createdAt(u.getCreatedAt())
                 .build();

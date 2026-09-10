@@ -8,6 +8,7 @@ export interface AdminUser {
   kullaniciAdi: string;
   ad: string;
   email: string | null;
+  telefon: string | null;
   superAdmin: boolean;
   createdAt: string;
 }
@@ -24,6 +25,12 @@ export function createUser(body: {
 }): Promise<AdminUser> {
   return apiFetch<AdminUser>("/admin/users", { method: "POST", body });
 }
+export function updateUser(
+  id: string,
+  body: { ad?: string; telefon?: string | null; parola?: string }
+): Promise<AdminUser> {
+  return apiFetch<AdminUser>(`/admin/users/${id}`, { method: "PATCH", body });
+}
 
 // Organizasyonlar
 export function listOrganizations(): Promise<Organization[]> {
@@ -37,6 +44,12 @@ export function createOrganization(body: {
   adres?: string | null;
 }): Promise<Organization> {
   return apiFetch<Organization>("/admin/organizations", { method: "POST", body });
+}
+export function updateOrganization(
+  id: string,
+  body: { ad?: string; telefon?: string | null; vergiNo?: string | null; adres?: string | null }
+): Promise<Organization> {
+  return apiFetch<Organization>(`/admin/organizations/${id}`, { method: "PATCH", body });
 }
 export function listMembers(orgId: string): Promise<Member[]> {
   return apiFetch<Member[]>(`/admin/organizations/${orgId}/members`);

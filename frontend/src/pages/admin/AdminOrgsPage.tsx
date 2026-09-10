@@ -8,6 +8,7 @@ import {
   listMembers,
   listOrganizations,
   removeMember,
+  updateOrganization,
 } from "../../api/admin";
 
 export default function AdminOrgsPage() {
@@ -29,6 +30,12 @@ export default function AdminOrgsPage() {
   const [uyeBusy, setUyeBusy] = useState(false);
   const [uyeHata, setUyeHata] = useState<string | null>(null);
 
+  // org düzenle
+  const [duzAd, setDuzAd] = useState("");
+  const [duzTel, setDuzTel] = useState("");
+  const [duzBusy, setDuzBusy] = useState(false);
+  const [duzHata, setDuzHata] = useState<string | null>(null);
+
   async function yukle() {
     setHata(null);
     try {
@@ -45,12 +52,31 @@ export default function AdminOrgsPage() {
   async function orgSec(o: Organization) {
     setSelected(o);
     setUyeHata(null);
+    setDuzHata(null);
+    setDuzAd(o.ad);
+    setDuzTel(o.telefon ?? "");
     setRol(o.tip === "LAB" ? "LAB_TEKNISYEN" : "HEKIM");
     setMembers([]);
     try {
       setMembers(await listMembers(o.id));
     } catch {
       setMembers([]);
+    }
+  }
+
+  async function orgKaydet(e: React.FormEvent) {
+    e.preventDefault();
+    if (!selected) return;
+    setDuzHata(null);
+    setDuzBusy(true);
+    try {
+      const g = await updateOrganization(selected.id, { ad: duzAd.trim(), telefon: duzTel.trim() || null });
+      setSelected(g);
+      await yukle();
+    } catch (err) {
+      setDuzHata(err instanceof ApiError ? err.message : "Güncellenemedi.");
+    } finally {
+      setDuzBusy(false);
     }
   }
 
@@ -165,6 +191,26 @@ export default function AdminOrgsPage() {
             </tbody>
           </table>
         </div>
+      )}
+
+      {selected && (
+        <section className="card block">
+          <div className="card-title">Organizasyon bilgileri</div>
+          <form className="member-form" onSubmit={orgKaydet}>
+            <label className="field grow">
+              <span>Ad</span>
+              <input value={duzAd} onChange={(e) => setDuzAd(e.target.value)} />
+            </label>
+            <label className="field">
+              <span>Telefon</span>
+              <input value={duzTel} onChange={(e) => setDuzTel(e.target.value)} placeholder="opsiyonel" />
+            </label>
+            <button className="btn btn-primary" type="submit" disabled={duzBusy}>
+              {duzBusy ? "…" : "Kaydet"}
+            </button>
+          </form>
+          {duzHata && <div className="alert alert-error">{duzHata}</div>}
+        </section>
       )}
 
       {selected && (

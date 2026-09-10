@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { ApiError } from "../../api/client";
 import { formatTarih } from "../../api/cases";
-import { createUser, listUsers, type AdminUser } from "../../api/admin";
+import { createUser, listUsers, updateUser, type AdminUser } from "../../api/admin";
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<AdminUser[] | null>(null);
@@ -14,6 +14,42 @@ export default function AdminUsersPage() {
   const [email, setEmail] = useState("");
   const [busy, setBusy] = useState(false);
   const [formHata, setFormHata] = useState<string | null>(null);
+
+  // düzenleme
+  const [editUser, setEditUser] = useState<AdminUser | null>(null);
+  const [editAd, setEditAd] = useState("");
+  const [editTel, setEditTel] = useState("");
+  const [editParola, setEditParola] = useState("");
+  const [editBusy, setEditBusy] = useState(false);
+  const [editHata, setEditHata] = useState<string | null>(null);
+
+  function duzenleAc(u: AdminUser) {
+    setEditUser(u);
+    setEditAd(u.ad);
+    setEditTel(u.telefon ?? "");
+    setEditParola("");
+    setEditHata(null);
+  }
+
+  async function duzenleKaydet(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editUser) return;
+    setEditHata(null);
+    setEditBusy(true);
+    try {
+      await updateUser(editUser.id, {
+        ad: editAd.trim(),
+        telefon: editTel.trim() || null,
+        parola: editParola || undefined,
+      });
+      setEditUser(null);
+      await yukle();
+    } catch (err) {
+      setEditHata(err instanceof ApiError ? err.message : "Güncellenemedi.");
+    } finally {
+      setEditBusy(false);
+    }
+  }
 
   async function yukle() {
     setHata(null);
@@ -100,6 +136,37 @@ export default function AdminUsersPage() {
         </form>
       )}
 
+      {editUser && (
+        <form className="card block inline-form" onSubmit={duzenleKaydet}>
+          <div className="card-title">
+            Düzenle · <span className="mono">{editUser.kullaniciAdi}</span>
+          </div>
+          <div className="grid-2">
+            <label className="field">
+              <span>Ad soyad</span>
+              <input value={editAd} onChange={(e) => setEditAd(e.target.value)} autoFocus />
+            </label>
+            <label className="field">
+              <span>Telefon</span>
+              <input value={editTel} onChange={(e) => setEditTel(e.target.value)} placeholder="opsiyonel" />
+            </label>
+            <label className="field full">
+              <span>Yeni parola (boş bırak = değiştirme)</span>
+              <input type="password" value={editParola} onChange={(e) => setEditParola(e.target.value)} placeholder="••••••••" />
+            </label>
+          </div>
+          {editHata && <div className="alert alert-error">{editHata}</div>}
+          <div className="inline-form-bar">
+            <button type="button" className="btn btn-ghost" onClick={() => setEditUser(null)}>
+              Vazgeç
+            </button>
+            <button type="submit" className="btn btn-primary" disabled={editBusy}>
+              {editBusy ? "Kaydediliyor…" : "Kaydet"}
+            </button>
+          </div>
+        </form>
+      )}
+
       {users === null && !hata && (
         <div className="skeleton-list">
           <div className="skeleton-row" />
@@ -117,6 +184,7 @@ export default function AdminUsersPage() {
                 <th>E-posta</th>
                 <th>Rol</th>
                 <th>Oluşturma</th>
+                <th aria-label="işlem"></th>
               </tr>
             </thead>
             <tbody>
@@ -133,6 +201,11 @@ export default function AdminUsersPage() {
                     )}
                   </td>
                   <td className="muted-cell">{formatTarih(u.createdAt)}</td>
+                  <td className="num">
+                    <button className="mini-btn" onClick={() => duzenleAc(u)}>
+                      Düzenle
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>

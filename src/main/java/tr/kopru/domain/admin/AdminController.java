@@ -8,6 +8,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import tr.kopru.domain.admin.dto.AdminUserResponse;
 import tr.kopru.domain.admin.dto.CreateUserRequest;
+import tr.kopru.domain.admin.dto.UpdateOrgRequest;
+import tr.kopru.domain.admin.dto.UpdateUserRequest;
 import tr.kopru.domain.catalog.CatalogService;
 import tr.kopru.domain.catalog.dto.CreateServiceItemRequest;
 import tr.kopru.domain.catalog.dto.PriceListResponse;
@@ -49,6 +51,12 @@ public class AdminController {
         return ResponseEntity.status(HttpStatus.CREATED).body(adminService.createUser(request));
     }
 
+    @PatchMapping("/users/{id}")
+    public ResponseEntity<AdminUserResponse> updateUser(
+            @PathVariable UUID id, @RequestBody UpdateUserRequest request) {
+        return ResponseEntity.ok(adminService.updateUser(id, request));
+    }
+
     // ---- Organizasyonlar ----
     @GetMapping("/organizations")
     public ResponseEntity<List<OrgResponse>> listOrganizations() {
@@ -58,6 +66,12 @@ public class AdminController {
     @PostMapping("/organizations")
     public ResponseEntity<OrgResponse> createOrganization(@Valid @RequestBody CreateOrgRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(adminService.createOrganization(request));
+    }
+
+    @PatchMapping("/organizations/{id}")
+    public ResponseEntity<OrgResponse> updateOrganization(
+            @PathVariable UUID id, @RequestBody UpdateOrgRequest request) {
+        return ResponseEntity.ok(adminService.updateOrganization(id, request));
     }
 
     @GetMapping("/organizations/{id}/members")
