@@ -6,6 +6,7 @@ import DashboardPage from "./pages/DashboardPage";
 import CasesPage from "./pages/CasesPage";
 import NewCasePage from "./pages/NewCasePage";
 import CaseDetailPage from "./pages/CaseDetailPage";
+import LedgerPage from "./pages/LedgerPage";
 
 function FullScreenLoader() {
   return (
@@ -34,6 +35,7 @@ export default function App() {
         <Route path="cases" element={<CasesPage />} />
         <Route path="cases/new" element={<NewCasePage />} />
         <Route path="cases/:id" element={<CaseDetailPage />} />
+        <Route path="ledger" element={<LedgerPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

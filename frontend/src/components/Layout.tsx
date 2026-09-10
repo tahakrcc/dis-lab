@@ -23,6 +23,9 @@ export default function Layout() {
           <NavLink to="/cases" className="nav-link">
             <span className="nav-dot" /> Vakalar
           </NavLink>
+          <NavLink to="/ledger" className="nav-link">
+            <span className="nav-dot" /> Cari hesap
+          </NavLink>
           {/* Sonraki sayfalar sırayla buraya eklenecek */}
         </nav>
 
