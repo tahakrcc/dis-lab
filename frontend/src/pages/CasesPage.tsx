@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import { ApiError } from "../api/client";
 import {
@@ -55,14 +55,21 @@ export default function CasesPage() {
 
   return (
     <div className="page">
-      <div className="page-head">
-        <div className="eyebrow">Vakalar</div>
-        <h1 className="page-title">Vaka listesi</h1>
-        <p className="page-desc">
-          {isLab
-            ? "Laboratuvarına gelen işler. Hasta kimliği görünmez; yalnızca rumuz."
-            : "Kliniğinin açtığı işler ve durumları."}
-        </p>
+      <div className="page-head list-head">
+        <div>
+          <div className="eyebrow">Vakalar</div>
+          <h1 className="page-title">Vaka listesi</h1>
+          <p className="page-desc">
+            {isLab
+              ? "Laboratuvarına gelen işler. Hasta kimliği görünmez; yalnızca rumuz."
+              : "Kliniğinin açtığı işler ve durumları."}
+          </p>
+        </div>
+        {!isLab && (
+          <Link to="/cases/new" className="btn btn-primary">
+            + Yeni vaka
+          </Link>
+        )}
       </div>
 
       <div className="filter-row">

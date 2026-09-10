@@ -4,6 +4,7 @@ import Layout from "./components/Layout";
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
 import CasesPage from "./pages/CasesPage";
+import NewCasePage from "./pages/NewCasePage";
 import CaseDetailPage from "./pages/CaseDetailPage";
 
 function FullScreenLoader() {
@@ -31,6 +32,7 @@ export default function App() {
       >
         <Route index element={<DashboardPage />} />
         <Route path="cases" element={<CasesPage />} />
+        <Route path="cases/new" element={<NewCasePage />} />
         <Route path="cases/:id" element={<CaseDetailPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
