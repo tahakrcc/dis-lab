@@ -26,6 +26,11 @@ export default function Layout() {
           <NavLink to="/ledger" className="nav-link">
             <span className="nav-dot" /> Cari hesap
           </NavLink>
+          {isLab && (
+            <NavLink to="/catalog" className="nav-link">
+              <span className="nav-dot" /> Katalog &amp; fiyat
+            </NavLink>
+          )}
           {/* Sonraki sayfalar sırayla buraya eklenecek */}
         </nav>
 

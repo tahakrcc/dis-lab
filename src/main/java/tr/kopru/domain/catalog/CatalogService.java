@@ -129,6 +129,12 @@ public class CatalogService {
                 priceListEntryRepository.save(existing);
             }
         }
+        // Eski kayitlarin UPDATE'i, yeni kaydin INSERT'inden ONCE veritabanina gitmeli;
+        // aksi halde Hibernate INSERT'i UPDATE'ten once calistirir ve iki aktif kayit
+        // ayni tarih araliginda cakisip exclusion constraint'i (23P01) ihlal eder.
+        if (!overlaps.isEmpty()) {
+            priceListEntryRepository.flush();
+        }
 
         PriceListEntry newEntry = new PriceListEntry();
         newEntry.setPartnership(partnership);

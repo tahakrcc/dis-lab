@@ -5,6 +5,7 @@ import { ApiError } from "../api/client";
 import { formatTutar, type MeasureType } from "../api/cases";
 import {
   createCase,
+  currentPrices,
   getPartnerships,
   getPartnershipPrices,
   getPatients,
@@ -90,7 +91,7 @@ export default function NewCasePage() {
     if (!partnershipId) return;
     let iptal = false;
     getPartnershipPrices(partnershipId)
-      .then((p) => !iptal && setPrices(p.filter((x) => x.aktif)))
+      .then((p) => !iptal && setPrices(currentPrices(p.filter((x) => x.aktif))))
       .catch(() => !iptal && setPrices([]));
     return () => {
       iptal = true;

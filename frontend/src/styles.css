@@ -1028,6 +1028,92 @@ a {
   border-color: var(--border-strong);
 }
 
+/* ---------- catalog ---------- */
+.mini-btn {
+  font: inherit;
+  font-size: 0.8rem;
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  padding: 5px 11px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.mini-btn:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+.mini-btn.primary {
+  color: var(--accent-ink);
+  border-color: var(--accent);
+  background: var(--accent-dim);
+}
+.mini-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.add-catalog {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+  align-items: center;
+}
+.add-catalog .add-ad {
+  flex: 1 1 240px;
+  font: inherit;
+  color: var(--text);
+  background: var(--panel-2);
+  border: 1px solid var(--border-strong);
+  border-radius: 9px;
+  padding: 10px 12px;
+}
+.add-catalog .add-ad:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-dim);
+}
+.add-catalog select {
+  font: inherit;
+  color: var(--text);
+  background: var(--panel-2);
+  border: 1px solid var(--border-strong);
+  border-radius: 9px;
+  padding: 10px 12px;
+}
+.cardtitle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.inline-select.tight {
+  gap: 8px;
+}
+.inline-select.tight > span {
+  font-size: 0.64rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--faint);
+  font-family: "IBM Plex Mono", monospace;
+}
+.price-input {
+  width: 110px;
+  font: inherit;
+  color: var(--text);
+  background: var(--panel-2);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  padding: 7px 10px;
+  font-variant-numeric: tabular-nums;
+}
+.price-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-dim);
+}
+
 @media (max-width: 760px) {
   .app-shell {
     grid-template-columns: 1fr;

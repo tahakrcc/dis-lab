@@ -52,8 +52,39 @@ export interface CreateCaseInput {
   items: CreateCaseItemInput[];
 }
 
+export interface ServiceItem {
+  id: string;
+  labId: string;
+  ad: string;
+  birim: BirimTipi;
+  aktif: boolean;
+  createdAt: string;
+}
+
 export function getPartnerships(): Promise<Partnership[]> {
   return apiFetch<Partnership[]>("/partnerships");
+}
+
+export function getServiceItems(): Promise<ServiceItem[]> {
+  return apiFetch<ServiceItem[]>("/service-items");
+}
+
+export function createServiceItem(body: { ad: string; birim: BirimTipi }): Promise<ServiceItem> {
+  return apiFetch<ServiceItem>("/service-items", { method: "POST", body });
+}
+
+export function updateServiceItem(
+  id: string,
+  body: { ad?: string; aktif?: boolean }
+): Promise<ServiceItem> {
+  return apiFetch<ServiceItem>(`/service-items/${id}`, { method: "PATCH", body });
+}
+
+export function upsertPrice(
+  partnershipId: string,
+  body: { serviceItemId: string; fiyat: number; gecerliBaslangic: string }
+): Promise<PriceEntry> {
+  return apiFetch<PriceEntry>(`/partnerships/${partnershipId}/prices`, { method: "PUT", body });
 }
 
 export function getPartnershipPrices(partnershipId: string): Promise<PriceEntry[]> {
@@ -81,6 +112,17 @@ export function isValidFdi(n: number): boolean {
     inRange(71, 75) ||
     inRange(81, 85)
   );
+}
+
+// Bir upsert eski fiyat kaydını kapatır ama aktif=true bırakır; aynı kalem için
+// birden çok "aktif" kayıt dönebilir. Bugün geçerli olanı (en yeni başlangıç) seç.
+export function currentPrices(prices: PriceEntry[]): PriceEntry[] {
+  const m = new Map<string, PriceEntry>();
+  for (const p of prices) {
+    const ex = m.get(p.serviceItemId);
+    if (!ex || p.gecerliBaslangic > ex.gecerliBaslangic) m.set(p.serviceItemId, p);
+  }
+  return [...m.values()];
 }
 
 export function parseDisler(text: string): number[] {
