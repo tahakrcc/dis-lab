@@ -32,6 +32,9 @@ public class AppUser {
     @Column(name = "parola_hash", nullable = false)
     private String parolaHash;
 
+    @Column(name = "is_super_admin", nullable = false)
+    private boolean superAdmin = false;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;

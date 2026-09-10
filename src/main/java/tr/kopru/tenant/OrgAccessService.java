@@ -7,6 +7,8 @@ import tr.kopru.common.Aktiflik;
 import tr.kopru.domain.org.MembershipRepository;
 import tr.kopru.domain.org.OrgTipi;
 import tr.kopru.domain.org.RolTipi;
+import tr.kopru.domain.user.AppUser;
+import tr.kopru.domain.user.AppUserRepository;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -22,6 +24,7 @@ import java.util.UUID;
 public class OrgAccessService {
 
     private final MembershipRepository membershipRepository;
+    private final AppUserRepository appUserRepository;
 
     public record OrgAuth(RolTipi rol, OrgTipi orgTip) {}
 
@@ -30,5 +33,14 @@ public class OrgAccessService {
         return membershipRepository
                 .findByUserIdAndOrganizationIdAndDurum(userId, orgId, Aktiflik.AKTIF)
                 .map(m -> new OrgAuth(m.getRol(), m.getOrganization().getTip()));
+    }
+
+    /**
+     * Kullanıcı süper-admin mi? @Transactional olmalı ki TenantAspect app.user_id'yi
+     * set etsin ve RLS altında kullanıcı KENDİ app_user satırını görebilsin.
+     */
+    @Transactional(readOnly = true)
+    public boolean isSuperAdmin(UUID userId) {
+        return appUserRepository.findById(userId).map(AppUser::isSuperAdmin).orElse(false);
     }
 }

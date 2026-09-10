@@ -26,6 +26,7 @@ export interface Me {
   ad: string;
   email: string | null;
   telefon: string | null;
+  superAdmin: boolean;
   memberships: Membership[];
 }
 

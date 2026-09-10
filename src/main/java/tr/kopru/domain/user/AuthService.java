@@ -150,6 +150,7 @@ public class AuthService {
                 .ad(user.getAd())
                 .email(user.getEmail())
                 .telefon(user.getTelefon())
+                .superAdmin(user.isSuperAdmin())
                 .memberships(membershipDtos)
                 .build();
     }

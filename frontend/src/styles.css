@@ -1150,6 +1150,24 @@ a {
   font-size: 0.8rem;
   color: var(--muted);
 }
+.admin-badge {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent-ink);
+  background: var(--accent-dim);
+  border: 1px solid var(--accent);
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-weight: 600;
+}
+.data-table tr.row-active td {
+  background: var(--accent-dim);
+}
+.table-wrap.block {
+  margin-bottom: 18px;
+}
 
 @media (max-width: 760px) {
   .app-shell {

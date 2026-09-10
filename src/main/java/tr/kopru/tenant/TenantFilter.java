@@ -39,7 +39,12 @@ public class TenantFilter extends OncePerRequestFilter {
                 TenantContext.setUserId(userId);
 
                 String orgHeader = request.getHeader("X-Org-Id");
-                List<SimpleGrantedAuthority> authorities = Collections.emptyList();
+                List<SimpleGrantedAuthority> authorities = new java.util.ArrayList<>();
+
+                // Platform süper-admin: org bağlamından bağımsız yetki
+                if (orgAccessService.isSuperAdmin(userId)) {
+                    authorities.add(new SimpleGrantedAuthority("ROLE_SUPER_ADMIN"));
+                }
 
                 if (StringUtils.hasText(orgHeader)) {
                     try {
@@ -57,10 +62,8 @@ public class TenantFilter extends OncePerRequestFilter {
 
                         OrgAccessService.OrgAuth orgAuth = authOpt.get();
                         TenantContext.setOrgId(orgId);
-                        authorities = List.of(
-                                new SimpleGrantedAuthority("ROLE_" + orgAuth.rol().name()),
-                                new SimpleGrantedAuthority("ORG_TYPE_" + orgAuth.orgTip().name())
-                        );
+                        authorities.add(new SimpleGrantedAuthority("ROLE_" + orgAuth.rol().name()));
+                        authorities.add(new SimpleGrantedAuthority("ORG_TYPE_" + orgAuth.orgTip().name()));
                     } catch (IllegalArgumentException e) {
                         response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                         response.setContentType("application/json;charset=UTF-8");
