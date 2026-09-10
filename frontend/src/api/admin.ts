@@ -3,6 +3,13 @@ import type { OrgTip, Rol } from "./types";
 import type { Member, Organization } from "./org";
 import type { BirimTipi, Partnership, PriceEntry, ServiceItem } from "./catalog";
 
+export interface UserMembership {
+  orgId: string;
+  orgAd: string;
+  orgTip: OrgTip;
+  rol: Rol;
+}
+
 export interface AdminUser {
   id: string;
   kullaniciAdi: string;
@@ -30,6 +37,9 @@ export function updateUser(
   body: { ad?: string; telefon?: string | null; parola?: string }
 ): Promise<AdminUser> {
   return apiFetch<AdminUser>(`/admin/users/${id}`, { method: "PATCH", body });
+}
+export function listUserMemberships(id: string): Promise<UserMembership[]> {
+  return apiFetch<UserMembership[]>(`/admin/users/${id}/memberships`);
 }
 
 // Organizasyonlar

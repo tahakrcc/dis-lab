@@ -10,6 +10,7 @@ import tr.kopru.domain.admin.dto.AdminUserResponse;
 import tr.kopru.domain.admin.dto.CreateUserRequest;
 import tr.kopru.domain.admin.dto.UpdateOrgRequest;
 import tr.kopru.domain.admin.dto.UpdateUserRequest;
+import tr.kopru.domain.admin.dto.UserMembershipResponse;
 import tr.kopru.domain.catalog.CatalogService;
 import tr.kopru.domain.catalog.dto.CreateServiceItemRequest;
 import tr.kopru.domain.catalog.dto.PriceListResponse;
@@ -55,6 +56,11 @@ public class AdminController {
     public ResponseEntity<AdminUserResponse> updateUser(
             @PathVariable UUID id, @RequestBody UpdateUserRequest request) {
         return ResponseEntity.ok(adminService.updateUser(id, request));
+    }
+
+    @GetMapping("/users/{id}/memberships")
+    public ResponseEntity<List<UserMembershipResponse>> userMemberships(@PathVariable UUID id) {
+        return ResponseEntity.ok(adminService.listUserMemberships(id));
     }
 
     // ---- Organizasyonlar ----

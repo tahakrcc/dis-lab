@@ -11,6 +11,7 @@ import tr.kopru.domain.admin.dto.AdminUserResponse;
 import tr.kopru.domain.admin.dto.CreateUserRequest;
 import tr.kopru.domain.admin.dto.UpdateOrgRequest;
 import tr.kopru.domain.admin.dto.UpdateUserRequest;
+import tr.kopru.domain.admin.dto.UserMembershipResponse;
 import tr.kopru.domain.catalog.ServiceItem;
 import tr.kopru.domain.catalog.ServiceItemRepository;
 import tr.kopru.domain.catalog.dto.CreateServiceItemRequest;
@@ -74,6 +75,18 @@ public class AdminService {
         }
         user = userRepository.save(user);
         return mapUser(user);
+    }
+
+    @Transactional(readOnly = true)
+    public List<UserMembershipResponse> listUserMemberships(UUID userId) {
+        return membershipRepository.findByUserIdAndDurumWithOrg(userId, Aktiflik.AKTIF).stream()
+                .map(m -> UserMembershipResponse.builder()
+                        .orgId(m.getOrganization().getId())
+                        .orgAd(m.getOrganization().getAd())
+                        .orgTip(m.getOrganization().getTip())
+                        .rol(m.getRol())
+                        .build())
+                .toList();
     }
 
     // ---- Organizasyonlar ----

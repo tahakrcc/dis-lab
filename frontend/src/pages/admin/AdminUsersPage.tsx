@@ -1,7 +1,15 @@
 import { useEffect, useState } from "react";
 import { ApiError } from "../../api/client";
 import { formatTarih } from "../../api/cases";
-import { createUser, listUsers, updateUser, type AdminUser } from "../../api/admin";
+import { ROL_ETIKET } from "../../api/types";
+import {
+  createUser,
+  listUserMemberships,
+  listUsers,
+  updateUser,
+  type AdminUser,
+  type UserMembership,
+} from "../../api/admin";
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<AdminUser[] | null>(null);
@@ -22,6 +30,7 @@ export default function AdminUsersPage() {
   const [editParola, setEditParola] = useState("");
   const [editBusy, setEditBusy] = useState(false);
   const [editHata, setEditHata] = useState<string | null>(null);
+  const [editRoller, setEditRoller] = useState<UserMembership[]>([]);
 
   function duzenleAc(u: AdminUser) {
     setEditUser(u);
@@ -29,6 +38,8 @@ export default function AdminUsersPage() {
     setEditTel(u.telefon ?? "");
     setEditParola("");
     setEditHata(null);
+    setEditRoller([]);
+    listUserMemberships(u.id).then(setEditRoller).catch(() => setEditRoller([]));
   }
 
   async function duzenleKaydet(e: React.FormEvent) {
@@ -155,6 +166,28 @@ export default function AdminUsersPage() {
               <input type="password" value={editParola} onChange={(e) => setEditParola(e.target.value)} placeholder="••••••••" />
             </label>
           </div>
+
+          <div className="roller-box">
+            <div className="roller-title">Organizasyon rolleri ({editRoller.length})</div>
+            {editRoller.length === 0 ? (
+              <div className="muted-cell">Bu kullanıcı henüz bir organizasyona atanmamış.</div>
+            ) : (
+              <ul className="member-list">
+                {editRoller.map((m) => (
+                  <li key={m.orgId + m.rol}>
+                    <div className="mem-main">
+                      <span className={`badge ${m.orgTip === "LAB" ? "badge-lab" : "badge-klinik"}`}>
+                        {m.orgTip === "LAB" ? "LAB" : "KLİNİK"}
+                      </span>
+                      <span className="mem-ad">{m.orgAd}</span>
+                    </div>
+                    <span className="mem-rol">{ROL_ETIKET[m.rol]}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
           {editHata && <div className="alert alert-error">{editHata}</div>}
           <div className="inline-form-bar">
             <button type="button" className="btn btn-ghost" onClick={() => setEditUser(null)}>

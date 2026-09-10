@@ -1172,6 +1172,19 @@ a {
 .table-wrap.block {
   margin-bottom: 18px;
 }
+.roller-box {
+  margin-top: 4px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+.roller-title {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.66rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin-bottom: 10px;
+}
 
 @media (max-width: 760px) {
   .app-shell {
