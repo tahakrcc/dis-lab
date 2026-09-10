@@ -1,5 +1,26 @@
 -- V4__rls_policies.sql
 
+-- Tabloya baglı RLS yardımcı fonksiyonları (tablolar V2'de olustu, burada tanımlanir)
+CREATE OR REPLACE FUNCTION app.user_orgs() RETURNS setof uuid
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+  SELECT org_id FROM membership
+   WHERE user_id = app.current_user_id() AND durum = 'AKTIF'
+$$;
+
+CREATE OR REPLACE FUNCTION app.user_partnerships() RETURNS setof uuid
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+  SELECT p.id FROM partnership p
+   WHERE p.durum = 'AKTIF'
+     AND (p.lab_id IN (SELECT app.user_orgs())
+       OR p.clinic_id IN (SELECT app.user_orgs()))
+$$;
+
+CREATE OR REPLACE FUNCTION app.user_clinic_orgs() RETURNS setof uuid
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+  SELECT m.org_id FROM membership m JOIN organization o ON o.id = m.org_id
+   WHERE m.user_id = app.current_user_id() AND m.durum='AKTIF' AND o.tip='KLINIK'
+$$;
+
 -- Helper function for active partner orgs
 CREATE OR REPLACE FUNCTION app.user_partner_orgs() RETURNS setof uuid
 LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$

@@ -7,7 +7,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
-import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
@@ -16,7 +15,10 @@ import java.util.UUID;
 @Slf4j
 @Aspect
 @Component
-@Order(Ordered.HIGHEST_PRECEDENCE + 10)
+// Transaction advice (order 0) DIŞ katman; bu aspect İÇ katman (order 100) olmalı
+// ki set_config, işlemin gerçek bağlantısında çalışsın (aksi halde RLS bağlamı
+// farklı/otomatik-commit bir bağlantıya yazılır ve okuma sorguları 0 satır döner).
+@Order(100)
 @RequiredArgsConstructor
 public class TenantAspect {
 

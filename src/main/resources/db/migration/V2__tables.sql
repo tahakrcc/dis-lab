@@ -17,7 +17,7 @@ CREATE TABLE organization (
 CREATE TABLE app_user (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     ad text NOT NULL,
-    email citext NOT NULL UNIQUE,
+    email text NOT NULL UNIQUE,
     telefon text,
     parola_hash text NOT NULL,
     created_at timestamptz NOT NULL DEFAULT now()
@@ -96,7 +96,7 @@ CREATE TABLE patient (
     ad text NOT NULL,
     telefon text,
     dogum_tarihi date,
-    not text,
+    notlar text,
     created_at timestamptz NOT NULL DEFAULT now()
 );
 

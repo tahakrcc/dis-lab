@@ -3,7 +3,7 @@
 -- auth akisinin FORCE RLS altinda calismasi icin pre-auth lookup eklendi.
 
 -- 1. Kullanici adi (sistem geneli benzersiz). citext => buyuk/kucuk harf duyarsiz.
-ALTER TABLE app_user ADD COLUMN kullanici_adi citext;
+ALTER TABLE app_user ADD COLUMN kullanici_adi text;
 
 -- Seed kullanicilarina kullanici adi ata (V6 ile gelen sabit id'ler)
 UPDATE app_user SET kullanici_adi = 'labadmin'    WHERE id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
@@ -27,7 +27,7 @@ ALTER TABLE app_user ALTER COLUMN email DROP NOT NULL;
 --    bu yuzden normal SELECT 0 satir donerdi. SECURITY DEFINER fonksiyon
 --    (superuser sahipli) RLS'i guvenli ve DAR kapsamli sekilde baypas eder:
 --    yalnizca tek kullanici adina ait (id, parola_hash) doner.
-CREATE OR REPLACE FUNCTION app.find_login(p_kullanici_adi citext)
+CREATE OR REPLACE FUNCTION app.find_login(p_kullanici_adi text)
 RETURNS TABLE(id uuid, parola_hash text)
 LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
   SELECT u.id, u.parola_hash FROM app_user u WHERE u.kullanici_adi = p_kullanici_adi
@@ -36,7 +36,7 @@ $$;
 DO $$
 BEGIN
   IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'kopru_app') THEN
-    GRANT EXECUTE ON FUNCTION app.find_login(citext) TO kopru_app;
+    GRANT EXECUTE ON FUNCTION app.find_login(text) TO kopru_app;
   END IF;
 END
 $$;

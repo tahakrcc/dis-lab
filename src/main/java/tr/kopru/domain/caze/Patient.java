@@ -32,6 +32,7 @@ public class Patient {
     @Column(name = "dogum_tarihi")
     private LocalDate dogumTarihi;
 
+    @Column(name = "notlar")
     private String not;
 
     @CreationTimestamp

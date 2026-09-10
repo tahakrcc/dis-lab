@@ -24,7 +24,7 @@ public interface AppUserRepository extends JpaRepository<AppUser, UUID> {
      *
      * @return her satir: [0]=UUID id, [1]=String parola_hash
      */
-    @Query(value = "SELECT id, parola_hash FROM app.find_login(CAST(:kullaniciAdi AS citext))",
+    @Query(value = "SELECT id, parola_hash FROM app.find_login(:kullaniciAdi)",
             nativeQuery = true)
     List<Object[]> findLoginRaw(@Param("kullaniciAdi") String kullaniciAdi);
 
@@ -33,7 +33,7 @@ public interface AppUserRepository extends JpaRepository<AppUser, UUID> {
      * olmadiginda app_user RLS altinda gorunmez; app.find_user_id_by_username
      * SECURITY DEFINER fonksiyonu id'yi dar kapsamda dondurur.
      */
-    @Query(value = "SELECT id FROM app.find_user_id_by_username(CAST(:kullaniciAdi AS citext))",
+    @Query(value = "SELECT id FROM app.find_user_id_by_username(:kullaniciAdi)",
             nativeQuery = true)
     List<UUID> findUserIdByUsername(@Param("kullaniciAdi") String kullaniciAdi);
 }
