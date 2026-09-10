@@ -95,6 +95,15 @@ export function getPatients(): Promise<Patient[]> {
   return apiFetch<Patient[]>("/patients");
 }
 
+export function createPatient(body: {
+  ad: string;
+  telefon?: string | null;
+  dogumTarihi?: string | null;
+  not?: string | null;
+}): Promise<Patient> {
+  return apiFetch<Patient>("/patients", { method: "POST", body });
+}
+
 export function createCase(input: CreateCaseInput): Promise<DentalCase> {
   return apiFetch<DentalCase>("/cases", { method: "POST", body: input });
 }

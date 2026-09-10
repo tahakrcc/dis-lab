@@ -31,6 +31,11 @@ export default function Layout() {
               <span className="nav-dot" /> Katalog &amp; fiyat
             </NavLink>
           )}
+          {!isLab && (
+            <NavLink to="/patients" className="nav-link">
+              <span className="nav-dot" /> Hastalar
+            </NavLink>
+          )}
           {/* Sonraki sayfalar sırayla buraya eklenecek */}
         </nav>
 
