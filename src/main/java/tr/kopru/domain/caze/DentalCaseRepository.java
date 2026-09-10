@@ -24,11 +24,15 @@ public interface DentalCaseRepository extends JpaRepository<DentalCase, UUID> {
     @Query("SELECT c FROM DentalCase c WHERE c.id = :id")
     Optional<DentalCase> findByIdForUpdate(@Param("id") UUID id);
 
-    @Query("SELECT c FROM DentalCase c " +
-            "WHERE (:partnershipId IS NULL OR c.partnership.id = :partnershipId) " +
-            "AND (:durum IS NULL OR c.durum = :durum) " +
-            "ORDER BY c.createdAt DESC")
-    List<DentalCase> findAllFiltered(
-            @Param("partnershipId") UUID partnershipId,
-            @Param("durum") CaseStatus durum);
+    // NOT: Tek sorguda "(:durum IS NULL OR ...)" kullanmak, durum NULL iken
+    // Postgres'in enum (case_status) parametre tipini cozememesine yol acar
+    // ("could not determine data type of parameter"). Bu yuzden turetilmis
+    // sorgular kullanilip serviste dallandirilir.
+    List<DentalCase> findAllByOrderByCreatedAtDesc();
+
+    List<DentalCase> findByPartnership_IdOrderByCreatedAtDesc(UUID partnershipId);
+
+    List<DentalCase> findByDurumOrderByCreatedAtDesc(CaseStatus durum);
+
+    List<DentalCase> findByPartnership_IdAndDurumOrderByCreatedAtDesc(UUID partnershipId, CaseStatus durum);
 }

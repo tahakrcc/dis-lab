@@ -20,6 +20,9 @@ export default function Layout() {
           <NavLink to="/" end className="nav-link">
             <span className="nav-dot" /> Panel
           </NavLink>
+          <NavLink to="/cases" className="nav-link">
+            <span className="nav-dot" /> Vakalar
+          </NavLink>
           {/* Sonraki sayfalar sırayla buraya eklenecek */}
         </nav>
 

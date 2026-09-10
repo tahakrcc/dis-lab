@@ -11,10 +11,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
-import tr.kopru.common.Aktiflik;
 import tr.kopru.config.JwtTokenProvider;
-import tr.kopru.domain.org.Membership;
-import tr.kopru.domain.org.MembershipRepository;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -27,7 +24,7 @@ import java.util.UUID;
 public class TenantFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
-    private final MembershipRepository membershipRepository;
+    private final OrgAccessService orgAccessService;
 
     @Override
     protected void doFilterInternal(
@@ -47,10 +44,10 @@ public class TenantFilter extends OncePerRequestFilter {
                 if (StringUtils.hasText(orgHeader)) {
                     try {
                         UUID orgId = UUID.fromString(orgHeader);
-                        Optional<Membership> membershipOpt = membershipRepository
-                                .findByUserIdAndOrganizationIdAndDurum(userId, orgId, Aktiflik.AKTIF);
+                        Optional<OrgAccessService.OrgAuth> authOpt =
+                                orgAccessService.resolveActiveMembership(userId, orgId);
 
-                        if (membershipOpt.isEmpty()) {
+                        if (authOpt.isEmpty()) {
                             // User is not an active member of the requested org -> 403 Forbidden
                             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
                             response.setContentType("application/json;charset=UTF-8");
@@ -58,11 +55,11 @@ public class TenantFilter extends OncePerRequestFilter {
                             return;
                         }
 
-                        Membership membership = membershipOpt.get();
+                        OrgAccessService.OrgAuth orgAuth = authOpt.get();
                         TenantContext.setOrgId(orgId);
                         authorities = List.of(
-                                new SimpleGrantedAuthority("ROLE_" + membership.getRol().name()),
-                                new SimpleGrantedAuthority("ORG_TYPE_" + membership.getOrganization().getTip().name())
+                                new SimpleGrantedAuthority("ROLE_" + orgAuth.rol().name()),
+                                new SimpleGrantedAuthority("ORG_TYPE_" + orgAuth.orgTip().name())
                         );
                     } catch (IllegalArgumentException e) {
                         response.setStatus(HttpServletResponse.SC_BAD_REQUEST);

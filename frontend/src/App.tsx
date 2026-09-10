@@ -3,6 +3,8 @@ import { useAuth } from "./auth/AuthContext";
 import Layout from "./components/Layout";
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
+import CasesPage from "./pages/CasesPage";
+import CaseDetailPage from "./pages/CaseDetailPage";
 
 function FullScreenLoader() {
   return (
@@ -28,6 +30,8 @@ export default function App() {
         element={status === "authed" ? <Layout /> : <Navigate to="/login" replace />}
       >
         <Route index element={<DashboardPage />} />
+        <Route path="cases" element={<CasesPage />} />
+        <Route path="cases/:id" element={<CaseDetailPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

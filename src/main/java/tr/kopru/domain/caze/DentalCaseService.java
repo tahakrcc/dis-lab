@@ -111,7 +111,16 @@ public class DentalCaseService {
 
     @Transactional(readOnly = true)
     public List<?> getCases(UUID partnershipId, CaseStatus durum) {
-        List<DentalCase> cases = caseRepository.findAllFiltered(partnershipId, durum);
+        List<DentalCase> cases;
+        if (partnershipId != null && durum != null) {
+            cases = caseRepository.findByPartnership_IdAndDurumOrderByCreatedAtDesc(partnershipId, durum);
+        } else if (partnershipId != null) {
+            cases = caseRepository.findByPartnership_IdOrderByCreatedAtDesc(partnershipId);
+        } else if (durum != null) {
+            cases = caseRepository.findByDurumOrderByCreatedAtDesc(durum);
+        } else {
+            cases = caseRepository.findAllByOrderByCreatedAtDesc();
+        }
         OrgTipi activeOrgType = getActiveOrgType();
 
         if (activeOrgType == OrgTipi.LAB) {
