@@ -116,8 +116,10 @@ export interface CaseMessage {
   senderUserId: string;
   senderAd: string;
   senderTaraf: "LAB" | "KLINIK";
-  metin: string;
+  metin: string | null;
   okunduAt: string | null;
+  duzenlendiAt: string | null;
+  silindiAt: string | null;
   createdAt: string;
 }
 
@@ -131,6 +133,14 @@ export function sendMessage(id: string, metin: string): Promise<CaseMessage> {
 
 export function markMessagesRead(id: string): Promise<void> {
   return apiFetch<void>(`/cases/${id}/messages/read`, { method: "POST" });
+}
+
+export function editMessage(caseId: string, messageId: string, metin: string): Promise<CaseMessage> {
+  return apiFetch<CaseMessage>(`/cases/${caseId}/messages/${messageId}`, { method: "PATCH", body: { metin } });
+}
+
+export function deleteMessage(caseId: string, messageId: string): Promise<void> {
+  return apiFetch<void>(`/cases/${caseId}/messages/${messageId}`, { method: "DELETE" });
 }
 
 export interface CaseAttachment {
@@ -175,6 +185,13 @@ export async function uploadAttachment(id: string, file: File): Promise<CaseAtta
     throw new Error(msg);
   }
   return res.json();
+}
+
+export async function fetchAttachmentObjectUrl(id: string): Promise<string> {
+  const res = await fetch(`/api/v1/attachments/${id}/download`, { headers: authHeaders() });
+  if (!res.ok) throw new Error("Önizleme yüklenemedi.");
+  const blob = await res.blob();
+  return URL.createObjectURL(blob);
 }
 
 export async function downloadAttachment(att: CaseAttachment): Promise<void> {

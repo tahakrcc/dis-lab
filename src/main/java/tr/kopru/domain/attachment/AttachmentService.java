@@ -24,6 +24,7 @@ public class AttachmentService {
     private final AttachmentRepository attachmentRepository;
     private final AppUserRepository userRepository;
     private final OrganizationRepository organizationRepository;
+    private final tr.kopru.ws.CaseWsHandler caseWsHandler;
 
     @Transactional(readOnly = true)
     public List<AttachmentResponse> list(UUID caseId) {
@@ -64,6 +65,7 @@ public class AttachmentService {
         } catch (DataIntegrityViolationException ex) {
             throw ApiException.forbidden("Bu vakaya dosya ekleme yetkiniz yok.");
         }
+        caseWsHandler.broadcast(caseId, java.util.Map.of("type", "attachment", "caseId", caseId.toString()));
         return map(a);
     }
 

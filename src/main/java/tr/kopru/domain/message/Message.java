@@ -41,6 +41,12 @@ public class Message {
     @Column(name = "okundu_at")
     private OffsetDateTime okunduAt;
 
+    @Column(name = "duzenlendi_at")
+    private OffsetDateTime duzenlendiAt;
+
+    @Column(name = "silindi_at")
+    private OffsetDateTime silindiAt;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;

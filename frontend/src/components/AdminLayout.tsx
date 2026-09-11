@@ -1,5 +1,6 @@
 import { NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
+import { ThemeToggle } from "./ThemeToggle";
 
 export default function AdminLayout() {
   const { me, logout } = useAuth();
@@ -37,6 +38,7 @@ export default function AdminLayout() {
         <header className="topbar">
           <div className="admin-badge">Platform Yönetimi</div>
           <div className="topbar-right">
+            <ThemeToggle />
             <div className="user-chip">
               <div className="user-ad">{me.ad}</div>
               <div className="user-rol">Süper Admin</div>

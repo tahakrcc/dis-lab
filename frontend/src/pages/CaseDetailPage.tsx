@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import { ApiError } from "../api/client";
@@ -12,10 +12,13 @@ import {
   getMessages,
   markMessagesRead,
   sendMessage,
+  editMessage,
+  deleteMessage,
   transitionCase,
   getAttachments,
   uploadAttachment,
   downloadAttachment,
+  fetchAttachmentObjectUrl,
   formatBoyut,
   type CaseEvent,
   type CaseMessage,
@@ -24,6 +27,8 @@ import {
 } from "../api/cases";
 import { availableActions, type ActionDef } from "../api/caseActions";
 import { StatusBadge } from "./CasesPage";
+import { useCaseLive } from "../api/live";
+import { VoiceRecorder } from "../components/VoiceRecorder";
 
 function disList(d: number[]): string {
   return d && d.length ? d.join(" · ") : "—";
@@ -39,6 +44,106 @@ function specAciklama(specs: string | null): string {
   }
 }
 
+function EkSatiri({ a, onIndir }: { a: CaseAttachment; onIndir: (x: CaseAttachment) => void }) {
+  const [url, setUrl] = useState<string | null>(null);
+  const [yukleniyor, setYukleniyor] = useState(false);
+  const mime = a.mime ?? "";
+  const isAudio = mime.startsWith("audio/") || a.dosyaAdi.startsWith("sesli-not");
+  const isImage = mime.startsWith("image/");
+  useEffect(() => {
+    return () => {
+      if (url) URL.revokeObjectURL(url);
+    };
+  }, [url]);
+  async function onizle() {
+    if (url || yukleniyor) return;
+    setYukleniyor(true);
+    try {
+      setUrl(await fetchAttachmentObjectUrl(a.id));
+    } catch {
+      /* yut */
+    } finally {
+      setYukleniyor(false);
+    }
+  }
+  return (
+    <li>
+      <div className="file-main">
+        <span className="file-icon">{isAudio ? "🎤" : isImage ? "🖼️" : "📎"}</span>
+        <div>
+          <div className="file-name">{a.dosyaAdi}</div>
+          <div className="file-meta">
+            <span className={`badge ${a.uploaderTaraf === "LAB" ? "badge-lab" : "badge-klinik"}`}>
+              {a.uploaderTaraf === "LAB" ? "LAB" : "KLİNİK"}
+            </span>
+            {a.uploaderAd} · {formatBoyut(a.boyut)} · {formatTarihSaat(a.createdAt)}
+          </div>
+          {url && isAudio && <audio className="ek-audio" src={url} controls autoPlay />}
+          {url && isImage && <img className="ek-img" src={url} alt={a.dosyaAdi} />}
+        </div>
+      </div>
+      <div className="file-actions">
+        {(isAudio || isImage) && !url && (
+          <button className="mini-btn" type="button" onClick={onizle} disabled={yukleniyor}>
+            {yukleniyor ? "…" : isAudio ? "▶ Dinle" : "Önizle"}
+          </button>
+        )}
+        <button className="mini-btn" type="button" onClick={() => onIndir(a)}>
+          İndir
+        </button>
+      </div>
+    </li>
+  );
+}
+
+function SohbetMedya({ a, benim }: { a: CaseAttachment; benim: boolean }) {
+  const [url, setUrl] = useState<string | null>(null);
+  const mime = a.mime ?? "";
+  const isAudio = mime.startsWith("audio/") || a.dosyaAdi.startsWith("sesli-not");
+  useEffect(() => {
+    let aktif = true;
+    let obj: string | null = null;
+    fetchAttachmentObjectUrl(a.id)
+      .then((u) => {
+        if (aktif) {
+          obj = u;
+          setUrl(u);
+        } else {
+          URL.revokeObjectURL(u);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      aktif = false;
+      if (obj) URL.revokeObjectURL(obj);
+    };
+  }, [a.id]);
+  return (
+    <div className={`chat-msg ${benim ? "mine" : ""}`}>
+      <div className="chat-bubble">
+        <div className="chat-meta">
+          <span className={`badge ${a.uploaderTaraf === "LAB" ? "badge-lab" : "badge-klinik"}`}>
+            {a.uploaderTaraf === "LAB" ? "LAB" : "KLİNİK"}
+          </span>
+          <span className="chat-sender">{a.uploaderAd}</span>
+          <span className="chat-time">{formatTarihSaat(a.createdAt)}</span>
+        </div>
+        {isAudio ? (
+          url ? (
+            <audio className="ek-audio" src={url} controls />
+          ) : (
+            <div className="chat-text muted-cell">🎤 ses yükleniyor…</div>
+          )
+        ) : url ? (
+          <img className="chat-img" src={url} alt={a.dosyaAdi} />
+        ) : (
+          <div className="chat-text muted-cell">🖼️ görsel yükleniyor…</div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function CaseDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { activeMembership, me } = useAuth();
@@ -48,11 +153,16 @@ export default function CaseDetailPage() {
   const [yeniMesaj, setYeniMesaj] = useState("");
   const [mesajGonder, setMesajGonder] = useState(false);
   const [mesajHata, setMesajHata] = useState<string | null>(null);
+  const [duzenId, setDuzenId] = useState<string | null>(null);
+  const [duzenMetin, setDuzenMetin] = useState("");
 
   const [ekler, setEkler] = useState<CaseAttachment[]>([]);
   const [dosyaBusy, setDosyaBusy] = useState(false);
   const [dosyaHata, setDosyaHata] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const chatListRef = useRef<HTMLDivElement>(null);
+  const atBottomRef = useRef(true);
+  const chatFotoRef = useRef<HTMLInputElement>(null);
 
   const [vaka, setVaka] = useState<DentalCase | null>(null);
   const [olaylar, setOlaylar] = useState<CaseEvent[]>([]);
@@ -78,26 +188,124 @@ export default function CaseDetailPage() {
     };
   }, [id]);
 
-  // Sohbet: ilk yükleme + 8sn'de bir tazeleme
+  // Yeniden yükleme fonksiyonları (hem efektler hem canlı güncelleme kullanır)
+  const yukleMesajlar = useCallback(() => {
+    if (!id) return;
+    getMessages(id)
+      .then((m) => {
+        setMesajlar(m);
+        markMessagesRead(id).catch(() => {});
+      })
+      .catch(() => {});
+  }, [id]);
+
+  const yukleVakaSessiz = useCallback(() => {
+    if (!id) return;
+    Promise.all([getCase(id), getCaseEvents(id).catch(() => [])])
+      .then(([v, e]) => {
+        setVaka(v);
+        setOlaylar(e);
+      })
+      .catch(() => {});
+  }, [id]);
+
+  const yukleEkler = useCallback(() => {
+    if (!id) return;
+    getAttachments(id)
+      .then(setEkler)
+      .catch(() => {});
+  }, [id]);
+
+  // Sohbet: ilk yükleme + 20sn yedek tazeleme (canlı push WebSocket ile gelir)
   useEffect(() => {
     if (!id) return;
-    let iptal = false;
-    const yukle = () =>
-      getMessages(id)
-        .then((m) => {
-          if (iptal) return;
-          setMesajlar(m);
-          // Karşı tarafın mesajlarını okundu işaretle
-          markMessagesRead(id).catch(() => {});
-        })
-        .catch(() => {});
-    yukle();
-    const t = setInterval(yukle, 8000);
-    return () => {
-      iptal = true;
-      clearInterval(t);
-    };
-  }, [id]);
+    yukleMesajlar();
+    const t = setInterval(yukleMesajlar, 20000);
+    return () => clearInterval(t);
+  }, [id, yukleMesajlar]);
+
+  // Canlı güncelleme (WebSocket): olay tipine göre ilgili veriyi tazele
+  useCaseLive(
+    id,
+    useCallback(
+      (ev) => {
+        if (ev.type === "message") yukleMesajlar();
+        else if (ev.type === "status") yukleVakaSessiz();
+        else if (ev.type === "attachment") yukleEkler();
+      },
+      [yukleMesajlar, yukleVakaSessiz, yukleEkler]
+    )
+  );
+
+  // Mesaj + medya eklerini tek sohbet akışında zaman sırasına göre birleştir
+  type AkisOgesi =
+    | { kind: "msg"; at: string; m: CaseMessage }
+    | { kind: "file"; at: string; a: CaseAttachment };
+  const akis: AkisOgesi[] = useMemo(() => {
+    const list: AkisOgesi[] = [];
+    for (const m of mesajlar) list.push({ kind: "msg", at: m.createdAt, m });
+    for (const a of ekler) {
+      const mime = a.mime ?? "";
+      if (mime.startsWith("audio/") || mime.startsWith("image/") || a.dosyaAdi.startsWith("sesli-not")) {
+        list.push({ kind: "file", at: a.createdAt, a });
+      }
+    }
+    list.sort((x, y) => (x.at < y.at ? -1 : x.at > y.at ? 1 : 0));
+    return list;
+  }, [mesajlar, ekler]);
+
+  // Sohbeti en alta sabitle: kullanıcı zaten alttaysa yeni mesajda otomatik kaydır
+  const onChatScroll = () => {
+    const el = chatListRef.current;
+    if (!el) return;
+    atBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 60;
+  };
+  useEffect(() => {
+    const el = chatListRef.current;
+    if (el && atBottomRef.current) el.scrollTop = el.scrollHeight;
+  }, [akis]);
+
+  function duzenleBasla(m: CaseMessage) {
+    setDuzenId(m.id);
+    setDuzenMetin(m.metin ?? "");
+  }
+  async function duzenleKaydet() {
+    if (!id || !duzenId || !duzenMetin.trim()) return;
+    try {
+      const yeni = await editMessage(id, duzenId, duzenMetin.trim());
+      setMesajlar((prev) => prev.map((x) => (x.id === yeni.id ? yeni : x)));
+      setDuzenId(null);
+      setDuzenMetin("");
+    } catch (err) {
+      setMesajHata(err instanceof ApiError ? err.message : "Mesaj düzenlenemedi.");
+    }
+  }
+  async function mesajSil(m: CaseMessage) {
+    if (!id) return;
+    if (!window.confirm("Bu mesaj silinsin mi?")) return;
+    try {
+      await deleteMessage(id, m.id);
+      setMesajlar((prev) =>
+        prev.map((x) => (x.id === m.id ? { ...x, silindiAt: new Date().toISOString(), metin: null } : x))
+      );
+    } catch (err) {
+      setMesajHata(err instanceof ApiError ? err.message : "Mesaj silinemedi.");
+    }
+  }
+
+  async function sesYukle(file: File) {
+    if (!id) return;
+    setDosyaHata(null);
+    setDosyaBusy(true);
+    try {
+      const yeni = await uploadAttachment(id, file);
+      setEkler((prev) => [...prev, yeni]);
+    } catch (err) {
+      setDosyaHata(err instanceof Error ? err.message : "Ses yüklenemedi.");
+    } finally {
+      setDosyaBusy(false);
+    }
+  }
 
   async function mesajYolla(e: React.FormEvent) {
     e.preventDefault();
@@ -115,17 +323,10 @@ export default function CaseDetailPage() {
     }
   }
 
-  // Ekler
+  // Ekler: ilk yükleme
   useEffect(() => {
-    if (!id) return;
-    let iptal = false;
-    getAttachments(id)
-      .then((a) => !iptal && setEkler(a))
-      .catch(() => {});
-    return () => {
-      iptal = true;
-    };
-  }, [id]);
+    yukleEkler();
+  }, [yukleEkler]);
 
   async function onDosyaSec(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -338,8 +539,9 @@ export default function CaseDetailPage() {
           <section className="card block">
             <div className="card-title cardtitle-row">
               <span>Dosyalar ({ekler.length})</span>
-              <div>
+              <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
                 <input ref={fileRef} type="file" onChange={onDosyaSec} hidden />
+                <VoiceRecorder onRecorded={sesYukle} disabled={dosyaBusy} />
                 <button
                   className="btn btn-ghost"
                   type="button"
@@ -356,23 +558,7 @@ export default function CaseDetailPage() {
             ) : (
               <ul className="file-list">
                 {ekler.map((a) => (
-                  <li key={a.id}>
-                    <div className="file-main">
-                      <span className="file-icon">📎</span>
-                      <div>
-                        <div className="file-name">{a.dosyaAdi}</div>
-                        <div className="file-meta">
-                          <span className={`badge ${a.uploaderTaraf === "LAB" ? "badge-lab" : "badge-klinik"}`}>
-                            {a.uploaderTaraf === "LAB" ? "LAB" : "KLİNİK"}
-                          </span>
-                          {a.uploaderAd} · {formatBoyut(a.boyut)} · {formatTarihSaat(a.createdAt)}
-                        </div>
-                      </div>
-                    </div>
-                    <button className="mini-btn" type="button" onClick={() => indir(a)}>
-                      İndir
-                    </button>
-                  </li>
+                  <EkSatiri key={a.id} a={a} onIndir={indir} />
                 ))}
               </ul>
             )}
@@ -380,14 +566,18 @@ export default function CaseDetailPage() {
 
           <section className="card block chat-card">
             <div className="card-title">Sohbet ({mesajlar.length})</div>
-            <div className="chat-list">
-              {mesajlar.length === 0 ? (
+            <div className="chat-list" ref={chatListRef} onScroll={onChatScroll}>
+              {akis.length === 0 ? (
                 <div className="empty sm">Henüz mesaj yok. Laboratuvar ↔ klinik yazışmasını burada yapın.</div>
               ) : (
-                mesajlar.map((m) => {
+                akis.map((o) => {
+                  if (o.kind === "file") {
+                    return <SohbetMedya key={`f-${o.a.id}`} a={o.a} benim={o.a.uploaderUserId === me?.id} />;
+                  }
+                  const m = o.m;
                   const benim = m.senderUserId === me?.id;
                   return (
-                    <div key={m.id} className={`chat-msg ${benim ? "mine" : ""}`}>
+                    <div key={`m-${m.id}`} className={`chat-msg ${benim ? "mine" : ""}`}>
                       <div className="chat-bubble">
                         <div className="chat-meta">
                           <span className={`badge ${m.senderTaraf === "LAB" ? "badge-lab" : "badge-klinik"}`}>
@@ -396,9 +586,48 @@ export default function CaseDetailPage() {
                           <span className="chat-sender">{m.senderAd}</span>
                           <span className="chat-time">{formatTarihSaat(m.createdAt)}</span>
                         </div>
-                        <div className="chat-text">{m.metin}</div>
-                        {benim && (
-                          <div className="chat-read">{m.okunduAt ? "✓✓ okundu" : "✓ gönderildi"}</div>
+                        {m.silindiAt ? (
+                          <div className="chat-text chat-silindi">Bu mesaj silindi</div>
+                        ) : duzenId === m.id ? (
+                          <div className="chat-edit">
+                            <input
+                              value={duzenMetin}
+                              onChange={(e) => setDuzenMetin(e.target.value)}
+                              maxLength={4000}
+                              autoFocus
+                            />
+                            <div className="chat-edit-actions">
+                              <button
+                                className="mini-btn"
+                                type="button"
+                                onClick={duzenleKaydet}
+                                disabled={!duzenMetin.trim()}
+                              >
+                                Kaydet
+                              </button>
+                              <button className="mini-btn" type="button" onClick={() => setDuzenId(null)}>
+                                İptal
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            <div className="chat-text">
+                              {m.metin}
+                              {m.duzenlendiAt && <span className="chat-edited"> (düzenlendi)</span>}
+                            </div>
+                            {benim && (
+                              <div className="chat-actions">
+                                <button className="chat-act" type="button" onClick={() => duzenleBasla(m)}>
+                                  Düzenle
+                                </button>
+                                <button className="chat-act" type="button" onClick={() => mesajSil(m)}>
+                                  Sil
+                                </button>
+                                <span className="chat-read">{m.okunduAt ? "✓✓ okundu" : "✓ gönderildi"}</span>
+                              </div>
+                            )}
+                          </>
                         )}
                       </div>
                     </div>
@@ -407,6 +636,27 @@ export default function CaseDetailPage() {
               )}
             </div>
             <form className="chat-input" onSubmit={mesajYolla}>
+              <VoiceRecorder onRecorded={sesYukle} disabled={dosyaBusy} etiket="🎤" />
+              <input
+                ref={chatFotoRef}
+                type="file"
+                accept="image/*"
+                multiple
+                hidden
+                onChange={(e) => {
+                  Array.from(e.target.files ?? []).forEach((f) => sesYukle(f));
+                  e.target.value = "";
+                }}
+              />
+              <button
+                type="button"
+                className="btn btn-ghost"
+                title="Fotoğraf gönder"
+                onClick={() => chatFotoRef.current?.click()}
+                disabled={dosyaBusy}
+              >
+                🖼️
+              </button>
               <input
                 value={yeniMesaj}
                 onChange={(e) => setYeniMesaj(e.target.value)}

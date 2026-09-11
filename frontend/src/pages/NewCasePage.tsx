@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import { ApiError } from "../api/client";
-import { formatTutar, type MeasureType } from "../api/cases";
+import { formatTutar, uploadAttachment, type MeasureType } from "../api/cases";
 import {
   createCase,
   currentPrices,
@@ -15,6 +15,7 @@ import {
   type Patient,
   type PriceEntry,
 } from "../api/catalog";
+import { VoiceRecorder } from "../components/VoiceRecorder";
 
 interface ItemRow {
   key: number;
@@ -65,6 +66,9 @@ export default function NewCasePage() {
 
   const [hata, setHata] = useState<string | null>(null);
   const [gonderiliyor, setGonderiliyor] = useState(false);
+  const [sesFile, setSesFile] = useState<File | null>(null);
+  const [fotolar, setFotolar] = useState<File[]>([]);
+  const fotoRef = useRef<HTMLInputElement>(null);
 
   // Ortaklıklar + hastalar
   useEffect(() => {
@@ -184,6 +188,15 @@ export default function NewCasePage() {
         genelNot: genelNot || null,
         items: payloadItems,
       });
+      // Sesli not + fotoğrafları yeni vakaya ek olarak yükle (opsiyonel; hata vaka oluşturmayı bozmaz)
+      const ekDosyalar = [sesFile, ...fotolar].filter((f): f is File => !!f);
+      for (const f of ekDosyalar) {
+        try {
+          await uploadAttachment(vaka.id, f);
+        } catch {
+          /* ek yüklenemedi, yut */
+        }
+      }
       navigate(`/cases/${vaka.id}`);
     } catch (err) {
       setHata(err instanceof ApiError ? err.message : "Vaka oluşturulamadı.");
@@ -361,6 +374,61 @@ export default function NewCasePage() {
             <button type="button" className="btn btn-ghost add-item" onClick={() => setItems((r) => [...r, bosRow()])}>
               + Kalem ekle
             </button>
+          </section>
+
+          <section className="card block">
+            <div className="card-title">Sesli not & fotoğraflar (opsiyonel)</div>
+            <p className="page-desc" style={{ marginTop: 0 }}>
+              Yazmak yerine sesli not bırakabilir, ağız içi fotoğraf ekleyebilirsin. Vaka oluşunca eklenir.
+            </p>
+            <div className="media-box">
+              <div className="media-row">
+                <VoiceRecorder
+                  onRecorded={(f) => setSesFile(f)}
+                  etiket={sesFile ? "🎤 Yeniden kaydet" : "🎤 Sesli not kaydet"}
+                />
+                {sesFile && (
+                  <span className="media-chip">
+                    🎤 {(sesFile.size / 1024).toFixed(0)} KB
+                    <button type="button" title="Kaldır" onClick={() => setSesFile(null)}>
+                      ×
+                    </button>
+                  </span>
+                )}
+              </div>
+              <div className="media-row">
+                <input
+                  ref={fotoRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  hidden
+                  onChange={(e) => {
+                    const secilen = Array.from(e.target.files ?? []);
+                    if (secilen.length) setFotolar((prev) => [...prev, ...secilen]);
+                    e.target.value = "";
+                  }}
+                />
+                <button type="button" className="btn btn-ghost" onClick={() => fotoRef.current?.click()}>
+                  🖼️ Fotoğraf ekle
+                </button>
+                {fotolar.length > 0 && (
+                  <span className="media-chip">
+                    {fotolar.length} fotoğraf
+                    <button type="button" title="Temizle" onClick={() => setFotolar([])}>
+                      ×
+                    </button>
+                  </span>
+                )}
+              </div>
+              {fotolar.length > 0 && (
+                <div className="foto-thumbs">
+                  {fotolar.map((f, i) => (
+                    <img key={i} src={URL.createObjectURL(f)} alt={f.name} />
+                  ))}
+                </div>
+              )}
+            </div>
           </section>
 
           {hata && <div className="alert alert-error">{hata}</div>}

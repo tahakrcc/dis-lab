@@ -36,6 +36,7 @@ public class CaseStateMachine {
     private final LedgerEntryRepository ledgerEntryRepository;
     private final PricingService pricingService;
     private final ObjectMapper objectMapper;
+    private final tr.kopru.ws.CaseWsHandler caseWsHandler;
 
     @Transactional
     public DentalCase transition(UUID caseId, String aksiyon, UUID actorUserId, Map<String, Object> payload) {
@@ -211,6 +212,9 @@ public class CaseStateMachine {
         event.setYeniDurum(nextStatus);
         event.setDetay(detayJson);
         eventRepository.save(event);
+
+        caseWsHandler.broadcast(dentalCase.getId(),
+                java.util.Map.of("type", "status", "caseId", dentalCase.getId().toString(), "durum", nextStatus.name()));
 
         return dentalCase;
     }

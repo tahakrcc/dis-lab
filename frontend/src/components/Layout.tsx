@@ -1,6 +1,7 @@
 import { NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import { ROL_ETIKET } from "../api/types";
+import { ThemeToggle } from "./ThemeToggle";
 
 export default function Layout() {
   const { me, activeOrgId, activeMembership, setActiveOrg, logout } = useAuth();
@@ -66,6 +67,7 @@ export default function Layout() {
           </div>
 
           <div className="topbar-right">
+            <ThemeToggle />
             <div className="user-chip">
               <div className="user-ad">{me.ad}</div>
               <div className="user-rol">

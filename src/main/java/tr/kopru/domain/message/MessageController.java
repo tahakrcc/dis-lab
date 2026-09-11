@@ -34,4 +34,17 @@ public class MessageController {
         messageService.markRead(caseId);
         return ResponseEntity.noContent().build();
     }
+
+    @PatchMapping("/{messageId}")
+    public ResponseEntity<MessageResponse> edit(
+            @PathVariable UUID caseId, @PathVariable UUID messageId,
+            @Valid @RequestBody CreateMessageRequest request) {
+        return ResponseEntity.ok(messageService.editMessage(caseId, messageId, request.getMetin()));
+    }
+
+    @DeleteMapping("/{messageId}")
+    public ResponseEntity<Void> delete(@PathVariable UUID caseId, @PathVariable UUID messageId) {
+        messageService.deleteMessage(caseId, messageId);
+        return ResponseEntity.noContent().build();
+    }
 }
