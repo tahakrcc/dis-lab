@@ -31,6 +31,14 @@ public class MessageService {
                 .toList();
     }
 
+    /** Karşı tarafın mesajlarını "okundu" işaretle (mevcut kullanıcı okuyor). */
+    @Transactional
+    public void markRead(UUID caseId) {
+        UUID userId = TenantContext.getUserId();
+        if (userId == null) return;
+        messageRepository.markOthersRead(caseId, userId);
+    }
+
     @Transactional
     public MessageResponse sendMessage(UUID caseId, CreateMessageRequest request) {
         UUID userId = TenantContext.getUserId();
@@ -69,6 +77,7 @@ public class MessageService {
                 .senderAd(m.getSenderAd())
                 .senderTaraf(m.getSenderTaraf())
                 .metin(m.getMetin())
+                .okunduAt(m.getOkunduAt())
                 .createdAt(m.getCreatedAt())
                 .build();
     }

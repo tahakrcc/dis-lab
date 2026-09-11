@@ -1254,6 +1254,15 @@ a {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-dim);
 }
+.chat-read {
+  font-size: 0.68rem;
+  color: var(--faint);
+  text-align: right;
+  margin-top: 3px;
+}
+.chat-msg.mine .chat-read {
+  color: var(--accent-ink);
+}
 
 @media (max-width: 760px) {
   .app-shell {

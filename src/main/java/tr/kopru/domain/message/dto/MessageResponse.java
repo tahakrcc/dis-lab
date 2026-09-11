@@ -16,5 +16,6 @@ public class MessageResponse {
     private String senderAd;
     private OrgTipi senderTaraf;
     private String metin;
+    private OffsetDateTime okunduAt;
     private OffsetDateTime createdAt;
 }

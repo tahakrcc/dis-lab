@@ -28,4 +28,10 @@ public class MessageController {
             @PathVariable UUID caseId, @Valid @RequestBody CreateMessageRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(messageService.sendMessage(caseId, request));
     }
+
+    @PostMapping("/read")
+    public ResponseEntity<Void> markRead(@PathVariable UUID caseId) {
+        messageService.markRead(caseId);
+        return ResponseEntity.noContent().build();
+    }
 }

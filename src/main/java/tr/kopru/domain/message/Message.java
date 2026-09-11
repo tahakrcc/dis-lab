@@ -38,6 +38,9 @@ public class Message {
     @Column(nullable = false)
     private String metin;
 
+    @Column(name = "okundu_at")
+    private OffsetDateTime okunduAt;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;

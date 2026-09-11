@@ -10,6 +10,7 @@ import {
   getCase,
   getCaseEvents,
   getMessages,
+  markMessagesRead,
   sendMessage,
   transitionCase,
   type CaseEvent,
@@ -73,7 +74,12 @@ export default function CaseDetailPage() {
     let iptal = false;
     const yukle = () =>
       getMessages(id)
-        .then((m) => !iptal && setMesajlar(m))
+        .then((m) => {
+          if (iptal) return;
+          setMesajlar(m);
+          // Karşı tarafın mesajlarını okundu işaretle
+          markMessagesRead(id).catch(() => {});
+        })
         .catch(() => {});
     yukle();
     const t = setInterval(yukle, 8000);
@@ -302,6 +308,9 @@ export default function CaseDetailPage() {
                           <span className="chat-time">{formatTarihSaat(m.createdAt)}</span>
                         </div>
                         <div className="chat-text">{m.metin}</div>
+                        {benim && (
+                          <div className="chat-read">{m.okunduAt ? "✓✓ okundu" : "✓ gönderildi"}</div>
+                        )}
                       </div>
                     </div>
                   );

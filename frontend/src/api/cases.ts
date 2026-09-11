@@ -117,6 +117,7 @@ export interface CaseMessage {
   senderAd: string;
   senderTaraf: "LAB" | "KLINIK";
   metin: string;
+  okunduAt: string | null;
   createdAt: string;
 }
 
@@ -126,6 +127,10 @@ export function getMessages(id: string): Promise<CaseMessage[]> {
 
 export function sendMessage(id: string, metin: string): Promise<CaseMessage> {
   return apiFetch<CaseMessage>(`/cases/${id}/messages`, { method: "POST", body: { metin } });
+}
+
+export function markMessagesRead(id: string): Promise<void> {
+  return apiFetch<void>(`/cases/${id}/messages/read`, { method: "POST" });
 }
 
 export function formatTutar(n: number): string {
