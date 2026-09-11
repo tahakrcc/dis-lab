@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import { ApiError } from "../api/client";
@@ -13,8 +13,13 @@ import {
   markMessagesRead,
   sendMessage,
   transitionCase,
+  getAttachments,
+  uploadAttachment,
+  downloadAttachment,
+  formatBoyut,
   type CaseEvent,
   type CaseMessage,
+  type CaseAttachment,
   type DentalCase,
 } from "../api/cases";
 import { availableActions, type ActionDef } from "../api/caseActions";
@@ -43,6 +48,11 @@ export default function CaseDetailPage() {
   const [yeniMesaj, setYeniMesaj] = useState("");
   const [mesajGonder, setMesajGonder] = useState(false);
   const [mesajHata, setMesajHata] = useState<string | null>(null);
+
+  const [ekler, setEkler] = useState<CaseAttachment[]>([]);
+  const [dosyaBusy, setDosyaBusy] = useState(false);
+  const [dosyaHata, setDosyaHata] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const [vaka, setVaka] = useState<DentalCase | null>(null);
   const [olaylar, setOlaylar] = useState<CaseEvent[]>([]);
@@ -102,6 +112,42 @@ export default function CaseDetailPage() {
       setMesajHata(err instanceof ApiError ? err.message : "Mesaj gönderilemedi.");
     } finally {
       setMesajGonder(false);
+    }
+  }
+
+  // Ekler
+  useEffect(() => {
+    if (!id) return;
+    let iptal = false;
+    getAttachments(id)
+      .then((a) => !iptal && setEkler(a))
+      .catch(() => {});
+    return () => {
+      iptal = true;
+    };
+  }, [id]);
+
+  async function onDosyaSec(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || !id) return;
+    setDosyaHata(null);
+    setDosyaBusy(true);
+    try {
+      const yeni = await uploadAttachment(id, file);
+      setEkler((prev) => [...prev, yeni]);
+    } catch (err) {
+      setDosyaHata(err instanceof Error ? err.message : "Dosya yüklenemedi.");
+    } finally {
+      setDosyaBusy(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  }
+
+  async function indir(att: CaseAttachment) {
+    try {
+      await downloadAttachment(att);
+    } catch (err) {
+      setDosyaHata(err instanceof Error ? err.message : "İndirilemedi.");
     }
   }
 
@@ -283,6 +329,49 @@ export default function CaseDetailPage() {
                         {ev.actorUserAd} · {formatTarihSaat(ev.createdAt)}
                       </div>
                     </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          <section className="card block">
+            <div className="card-title cardtitle-row">
+              <span>Dosyalar ({ekler.length})</span>
+              <div>
+                <input ref={fileRef} type="file" onChange={onDosyaSec} hidden />
+                <button
+                  className="btn btn-ghost"
+                  type="button"
+                  onClick={() => fileRef.current?.click()}
+                  disabled={dosyaBusy}
+                >
+                  {dosyaBusy ? "Yükleniyor…" : "+ Dosya ekle"}
+                </button>
+              </div>
+            </div>
+            {dosyaHata && <div className="alert alert-error">{dosyaHata}</div>}
+            {ekler.length === 0 ? (
+              <div className="empty sm">Henüz dosya yok. Ölçü (STL), fotoğraf vb. ekleyebilirsin.</div>
+            ) : (
+              <ul className="file-list">
+                {ekler.map((a) => (
+                  <li key={a.id}>
+                    <div className="file-main">
+                      <span className="file-icon">📎</span>
+                      <div>
+                        <div className="file-name">{a.dosyaAdi}</div>
+                        <div className="file-meta">
+                          <span className={`badge ${a.uploaderTaraf === "LAB" ? "badge-lab" : "badge-klinik"}`}>
+                            {a.uploaderTaraf === "LAB" ? "LAB" : "KLİNİK"}
+                          </span>
+                          {a.uploaderAd} · {formatBoyut(a.boyut)} · {formatTarihSaat(a.createdAt)}
+                        </div>
+                      </div>
+                    </div>
+                    <button className="mini-btn" type="button" onClick={() => indir(a)}>
+                      İndir
+                    </button>
                   </li>
                 ))}
               </ul>

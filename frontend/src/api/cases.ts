@@ -1,4 +1,4 @@
-import { apiFetch } from "./client";
+import { apiFetch, tokenStore } from "./client";
 
 export type CaseStatus =
   | "TASLAK"
@@ -131,6 +131,70 @@ export function sendMessage(id: string, metin: string): Promise<CaseMessage> {
 
 export function markMessagesRead(id: string): Promise<void> {
   return apiFetch<void>(`/cases/${id}/messages/read`, { method: "POST" });
+}
+
+export interface CaseAttachment {
+  id: string;
+  caseId: string;
+  uploaderUserId: string;
+  uploaderAd: string;
+  uploaderTaraf: "LAB" | "KLINIK";
+  dosyaAdi: string;
+  mime: string | null;
+  boyut: number;
+  createdAt: string;
+}
+
+function authHeaders(): Record<string, string> {
+  const h: Record<string, string> = {};
+  if (tokenStore.access) h["Authorization"] = `Bearer ${tokenStore.access}`;
+  if (tokenStore.orgId) h["X-Org-Id"] = tokenStore.orgId;
+  return h;
+}
+
+export function getAttachments(id: string): Promise<CaseAttachment[]> {
+  return apiFetch<CaseAttachment[]>(`/cases/${id}/attachments`);
+}
+
+export async function uploadAttachment(id: string, file: File): Promise<CaseAttachment> {
+  const fd = new FormData();
+  fd.append("file", file);
+  const res = await fetch(`/api/v1/cases/${id}/attachments`, {
+    method: "POST",
+    headers: authHeaders(), // Content-Type'ı FormData otomatik ayarlar
+    body: fd,
+  });
+  if (!res.ok) {
+    let msg = `Yükleme başarısız (${res.status})`;
+    try {
+      const d = await res.json();
+      msg = d?.error?.message ?? msg;
+    } catch {
+      /* boş */
+    }
+    throw new Error(msg);
+  }
+  return res.json();
+}
+
+export async function downloadAttachment(att: CaseAttachment): Promise<void> {
+  const res = await fetch(`/api/v1/attachments/${att.id}/download`, { headers: authHeaders() });
+  if (!res.ok) throw new Error("Dosya indirilemedi.");
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = att.dosyaAdi;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+export function formatBoyut(n: number): string {
+  if (n < 1024) return `${n} B`;
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+  return `${(n / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 export function formatTutar(n: number): string {
